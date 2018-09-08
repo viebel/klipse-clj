@@ -263,7 +263,7 @@
           second
           str)))
 
-(defn str-eval-async [exp {:keys [container-id setup-container-fn :verbose] :as opts}]
+(defn str-eval-async [exp {:keys [container-id setup-container-fn verbose?] :as opts}]
   (let [c (chan)]
     (when verbose? (js/console.info "[clojure] evaluating" exp))
     (go
