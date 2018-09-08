@@ -1,5 +1,6 @@
 (ns klipse.eval-test
-  (:require-macros 
+  (:require-macros
+    [gadjett.core :refer [dbg]]
     [cljs.core.async.macros :refer [go]])
   (:require
     [cljs.test :refer [deftest is are async use-fixtures]]
@@ -54,19 +55,21 @@
               (append-cyclic  12))" '(10 11 12)
           "(ns foo.core) ::aa"  :foo.core/aa
           "(ns my.aa) (+ 1 2)" 3)
+        "`(1 2)" '(1 2)
+        "(def a 1) `(1 a)" '(1 1)
         (done))))
 
-#_(deftest test-eval-macros
+(deftest test-eval-macros
     "eval with macros"
     (async done
       (go (are [input-clj output-clj]
-            (b= (<! (the-eval input-clj)) [:ok output-clj])
+            (b= (dbg (<! (the-eval input-clj))) [:ok output-clj])
 
-            "(ns my.hello)
+            "(ns my.hello$macros)
             (defmacro hello
             [x]
             `(inc ~x))
-            (hello nil nil 13)" '(cljs.core/inc 13)
+            (my.hello/hello 12)" 13
             )
           (done))))
 

@@ -3,3 +3,7 @@ klipse.iml
 out/
 resources/
 target/
+node_modules
+.cpcache/
+.rebel_readline_history
+figwheel_server.log

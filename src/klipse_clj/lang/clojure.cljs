@@ -90,7 +90,7 @@
 (def original-emits compiler/emits)
 
 (defn core-compile-an-exp [s {:keys [static-fns external-libs max-eval-duration compile-display-guard verbose?]
-                              :or {static-fns false external-libs nil max-eval-duration min-max-eval-duration compile-display-guard false :verbose? false}}]
+                              :or {static-fns false external-libs nil max-eval-duration min-max-eval-duration compile-display-guard false verbose? false}}]
   (let [c (chan)
         max-eval-duration (max max-eval-duration min-max-eval-duration)
         the-emits (if compile-display-guard (partial my-emits max-eval-duration) original-emits)]
@@ -143,7 +143,12 @@
 
 (defn first-exp-and-rest [s]
   (binding [r/*alias-map* (current-alias-map)
-            *ns* @current-ns]
+            *ns* @current-ns
+            ana/*cljs-ns* @current-ns
+            env/*compiler* (create-state-eval)
+            r/resolve-symbol ana/resolve-symbol
+            ;; r/*data-readers* (data-readers)                 ;; see relevant code in Planck
+            ]
     (let [sentinel (js-obj)
           reader (rt/string-push-back-reader s)
           res (r/read reader false sentinel)]
@@ -277,3 +282,17 @@
             (put! c (-> (<! (eval-async exp opts))
                         second))))))
     c))
+
+(defn main []
+  (js/console.log "main"))
+
+(comment
+  (enable-console-print!)
+  (go (def a (<! (the-eval "(ns my.hello$macros)
+            (defmacro hello
+            [x]
+            `(inc ~x))
+            (hello nil nil 13)" {:verbose? false}))))
+  a
+  (println 99)
+  )
