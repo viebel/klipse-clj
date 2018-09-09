@@ -4,6 +4,7 @@
     [cljs.core.async.macros :refer [go]])
   (:require
     [cljs.test :refer [deftest is are async use-fixtures]]
+    [klipse-clj.lang.clojure.io :refer [*klipse-settings*]]
     [klipse-clj.lang.clojure.include :refer [reset-state-eval!]]
     [cljs.core.async :refer [<!]]
     [clojure.string :as string]
@@ -14,7 +15,7 @@
     (string/replace s #"\n|\s" "")
     s))
 
-#_(use-fixtures :each
+(use-fixtures :each
               {:before (fn [] (reset-state-eval!))})
 
 (defn a= [& args]
@@ -73,12 +74,30 @@
             )
           (done))))
 
-#_(deftest test-eval-3
+(deftest test-eval-3
   "eval with namespaces"
   (async done
     (go (are [input-clj output-clj]
-          (b= (the-eval input-clj) [:ok output-clj])
+          (b= (<! (the-eval input-clj)) [:ok output-clj])
           "(ns my-ns.core (:require [clojure.string :as string])) (string/blank? \"HELLO!!\")" false)
+        (done))))
+
+(set! *klipse-settings* {:cached_ns_root "http://localhost:9990/docs/cache-cljs"})
+#_(deftest test-eval-spec-alpha
+  "eval with namespaces"
+  (async done
+    (go (are [input-clj output-clj]
+          (b= (<! (the-eval input-clj)) [:ok output-clj])
+          "(require 'clojure.spec.alpha)" nil)
+        (done))))
+
+(deftest test-eval-spec
+  "eval with namespaces"
+  (async done
+    (go (are [input-clj output-clj]
+          (b= (<! (the-eval input-clj)) [:ok output-clj])
+          "(require 'clojure.spec)" nil
+          "(require '[clojure.spec :as s]\n  '[clojure.spec.test :as stest]\n  '[clojure.spec.impl.gen :as gen])" nil)
         (done))))
 
 (deftest test-eval-4

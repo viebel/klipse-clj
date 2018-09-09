@@ -1,4 +1,4 @@
-(defproject viebel/klipse-clj "7.5.0"
+(defproject viebel/klipse-clj "7.5.1"
   :description "Self-hosted clojurescript library"
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/clojurescript "1.10.238"]
