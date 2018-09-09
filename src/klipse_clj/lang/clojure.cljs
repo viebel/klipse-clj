@@ -288,7 +288,7 @@
 
 (comment
   (enable-console-print!)
-  (go (def a (<! (the-eval "(ns my.hello$macros)
+  (go (println (<! (the-eval "(ns my.hello$macros)
             (defmacro hello
             [x]
             `(inc ~x))

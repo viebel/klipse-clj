@@ -5,7 +5,6 @@
            org.clojure/core.async     {:mvn/version "0.4.474"}
            im.chit/purnam             {:mvn/version "0.5.2"}
            viebel/codemirror-parinfer {:mvn/version "0.0.3"}
-           cljsjs/markdown            {:mvn/version "0.6.0-beta1-0"}
            cljs-http                  {:mvn/version "0.1.42"}
            viebel/gadjett             {:mvn/version "0.5.2"}}
  :aliases {:test     {:extra-paths ["test]"]}
