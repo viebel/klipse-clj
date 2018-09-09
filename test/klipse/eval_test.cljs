@@ -63,7 +63,7 @@
     "eval with macros"
     (async done
       (go (are [input-clj output-clj]
-            (b= (dbg (<! (the-eval input-clj))) [:ok output-clj])
+            (b= (<! (the-eval input-clj)) [:ok output-clj])
 
             "(ns my.hello$macros)
             (defmacro hello

@@ -1,5 +1,5 @@
-(defproject klipse "7.4.0"
-  :description "Embeddable multi-language WEB REPL"
+(defproject viebel/klipse-clj "7.4.0"
+  :description "Self-hosted clojurescript lib"
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/clojurescript "1.10.238"]
                  [org.clojure/tools.reader "1.3.0"]
