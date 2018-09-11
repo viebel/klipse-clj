@@ -1,4 +1,4 @@
-(ns klipse.eval-test
+(ns klipse-clj.eval-test
   (:require-macros
     [gadjett.core :refer [dbg]]
     [cljs.core.async.macros :refer [go]])
@@ -10,13 +10,14 @@
     [clojure.string :as string]
     [klipse-clj.lang.clojure :refer [the-eval result-as-str split-expressions]]))
 
+
 (defn remove-chars [s]
   (if (string? s)
     (string/replace s #"\n|\s" "")
     s))
 
-(use-fixtures :each
-              {:before (fn [] (reset-state-eval!))})
+#_(use-fixtures :each
+              {:before (fn [] (println "before") (reset-state-eval!))})
 
 (defn a= [& args]
   (apply = (map remove-chars args)))
@@ -54,11 +55,13 @@
               (append-cyclic  10)
               (append-cyclic  11)
               (append-cyclic  12))" '(10 11 12)
-          "(ns foo.core) ::aa"  :foo.core/aa
-          "(ns my.aa) (+ 1 2)" 3)
-        "`(1 2)" '(1 2)
-        "(def a 1) `(1 a)" '(1 1)
+          "(ns foo.core) ::aa" :foo.core/aa
+          "(ns my.aa) (+ 1 2)" 3
+          "`(1 2)" '(1 2)
+          "(ns my.bb) (def a 1) `(1 a)" '(1 my.bb/a))
         (done))))
+
+
 
 (deftest test-eval-macros
     "eval with macros"
@@ -88,7 +91,9 @@
   (async done
     (go (are [input-clj output-clj]
           (b= (<! (the-eval input-clj)) [:ok output-clj])
-          "(require 'clojure.spec.alpha)" nil)
+          "(ns your.spec)
+          (require '[clojure.spec.alpha :as s])" nil
+          "(s/def ::x integer?)" :your.spec/x)
         (done))))
 
 (deftest test-eval-spec
@@ -96,8 +101,9 @@
   (async done
     (go (are [input-clj output-clj]
           (b= (<! (the-eval input-clj)) [:ok output-clj])
-          "(require 'clojure.spec)" nil
-          "(require '[clojure.spec :as s]\n  '[clojure.spec.test :as stest]\n  '[clojure.spec.impl.gen :as gen])" nil)
+          "(ns my.spec) (require 'clojure.spec)" nil
+          "(require '[clojure.spec :as s]\n  '[clojure.spec.test :as stest]\n  '[clojure.spec.impl.gen :as gen])" nil
+          "(s/def ::x integer?)" :my.spec/x)
         (done))))
 
 (deftest test-eval-4

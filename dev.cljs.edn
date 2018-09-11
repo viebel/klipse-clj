@@ -1,3 +1,4 @@
-^{:open-url "http://localhost:5015/test.html"
-  :ring-server-options {:port 5015}}
-{:main klipse.test-runner}
+^{:open-url "http://localhost:5015/dev.html"
+  :ring-server-options {:port 5015}
+  :watch-dirs ["src" ]}
+{:main klipse-clj.lang.clojure}

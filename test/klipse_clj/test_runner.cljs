@@ -1,11 +1,12 @@
 
-(ns klipse.test-runner
+(ns klipse-clj.test-runner
   (:require
+    [klipse-clj.lang.clojure.io]
     [cljs-test-display.core]
     [cljs.test :refer-macros [run-tests] :refer [report]]
     [figwheel.main.async-result :as async-result]
-    [klipse.eval-test]
-    [klipse.compile-test]))
+    [klipse-clj.eval-test]
+    [klipse-clj.compile-test]))
 
 ;; tests can be asynchronous, we must hook test end
 (defmethod report [:cljs.test/default :end-run-tests] [test-data]
@@ -14,5 +15,5 @@
     (async-result/throw-ex (ex-info "Tests Failed" test-data))))
 
 (run-tests (cljs-test-display.core/init! "app-testing")
-           'klipse.eval-test
-           'klipse.compile-test)
+           'klipse-clj.eval-test
+           'klipse-clj.compile-test)

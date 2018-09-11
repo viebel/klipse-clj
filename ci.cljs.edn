@@ -1,4 +1,4 @@
 ^{:open-url "http://localhost:5015/ci.html"
   :ring-server-options {:port 5015}
   :launch-js ["phantomjs" :open-url] }
-{:main klipse.test-runner-ci}
+{:main klipse-clj.test-runner-ci}
