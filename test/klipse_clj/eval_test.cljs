@@ -104,11 +104,27 @@
            (s/describe (s/get-spec `foo))" '(fspec :args (cat :x :your.spec/x) :ret string? :fn nil)
           "(s/describe (:args (s/get-spec `foo)))" '(cat :x :your.spec/x)
           "(stest/instrument `foo)" ['your.spec/foo]
-          ;   "(foo 1)" 1
+          "(foo 1)" 1
+          "(stest/unstrument `foo)" ['your.spec/foo]
+          "(foo :a)" :a
           )
         (done))))
 
 
+(deftest test-eval-spec-errors
+  "eval with expected failures related to spec"
+  (async done
+    (go
+      (are [input-clj]
+        (= :error (first (<! (the-eval input-clj))))
+        "(require '[clojure.spec.alpha :as s]
+             '[cljs.spec.test.alpha :as stest]
+             '[clojure.spec.gen.alpha :as gen])
+         (defn foo [x] x)
+        (s/fdef foo :args (s/cat :x ::x)
+                :ret string?)
+         (stest/instrument `foo) (foo :a)")
+      (done))))
 
 (deftest test-eval-4
   "eval with types"
