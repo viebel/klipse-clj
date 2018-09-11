@@ -97,7 +97,15 @@
           "(s/def ::x integer?)" :your.spec/x
           "(require '[clojure.spec.alpha :as s]
              '[cljs.spec.test.alpha :as stest]
-             '[clojure.spec.gen.alpha :as gen])" nil)
+             '[clojure.spec.gen.alpha :as gen])" nil
+          "(defn foo [x] x)
+          (s/fdef foo :args (s/cat :x ::x)
+           :ret string?)
+           (s/describe (s/get-spec `foo))" '(fspec :args (cat :x :your.spec/x) :ret string? :fn nil)
+          "(s/describe (:args (s/get-spec `foo)))" '(cat :x :your.spec/x)
+          "(stest/instrument `foo)" ['your.spec/foo]
+          ;   "(foo 1)" 1
+          )
         (done))))
 
 
