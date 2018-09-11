@@ -1,9 +1,14 @@
-# Tests - Auto reload
+# dev
 ```bash
 clj  -A:figwheel -C:test  --build dev --repl
 ```
 
-open [http://localhost:5015/test.html](http://localhost:5015/test.html)
+
+# Tests - Auto reload
+```bash
+clj  -A:figwheel -C:test  --build test --repl
+```
+
 
 # Tests - CI
 

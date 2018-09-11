@@ -10,6 +10,7 @@
     [clojure.string :as string]
     [klipse-clj.lang.clojure :refer [the-eval result-as-str split-expressions]]))
 
+(set! *klipse-settings* {:cached_ns_root "http://localhost:9990/docs/cache-cljs"})
 
 (defn remove-chars [s]
   (if (string? s)
@@ -85,7 +86,7 @@
           "(ns my-ns.core (:require [clojure.string :as string])) (string/blank? \"HELLO!!\")" false)
         (done))))
 
-(set! *klipse-settings* {:cached_ns_root "http://localhost:9990/docs/cache-cljs"})
+
 (deftest test-eval-spec-alpha
   "eval with namespaces"
   (async done
@@ -93,18 +94,13 @@
           (b= (<! (the-eval input-clj)) [:ok output-clj])
           "(ns your.spec)
           (require '[clojure.spec.alpha :as s])" nil
-          "(s/def ::x integer?)" :your.spec/x)
+          "(s/def ::x integer?)" :your.spec/x
+          "(require '[clojure.spec.alpha :as s]
+             '[cljs.spec.test.alpha :as stest]
+             '[clojure.spec.gen.alpha :as gen])" nil)
         (done))))
 
-(deftest test-eval-spec
-  "eval with namespaces"
-  (async done
-    (go (are [input-clj output-clj]
-          (b= (<! (the-eval input-clj)) [:ok output-clj])
-          "(ns my.spec) (require 'clojure.spec)" nil
-          "(require '[clojure.spec :as s]\n  '[clojure.spec.test :as stest]\n  '[clojure.spec.impl.gen :as gen])" nil
-          "(s/def ::x integer?)" :my.spec/x)
-        (done))))
+
 
 (deftest test-eval-4
   "eval with types"
