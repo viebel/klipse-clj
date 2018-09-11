@@ -83,7 +83,7 @@
         (done))))
 
 (set! *klipse-settings* {:cached_ns_root "http://localhost:9990/docs/cache-cljs"})
-#_(deftest test-eval-spec-alpha
+(deftest test-eval-spec-alpha
   "eval with namespaces"
   (async done
     (go (are [input-clj output-clj]
