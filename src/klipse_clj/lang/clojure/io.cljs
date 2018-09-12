@@ -120,7 +120,7 @@
       (string/replace #"\." "_SLASH_")))
 
 (defn cached-ns-root []
-  (:cached_ns_root *klipse-settings* "https://viebel.github.io/klipse/cache-cljs/"))
+  (:cached_ns_root *klipse-settings* "https://viebel.github.io/cljs-analysis-cache/cache/"))
 
 (defn load-ns-from-cache [name src-cb macro?]
   (when *verbose?* (js/console.info "load-ns-from-cache:" (str name) "macro: " macro?))

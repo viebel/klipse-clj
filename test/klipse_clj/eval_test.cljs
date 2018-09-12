@@ -10,7 +10,7 @@
     [clojure.string :as string]
     [klipse-clj.lang.clojure :refer [the-eval result-as-str split-expressions]]))
 
-(set! *klipse-settings* {:cached_ns_root "http://localhost:9990/docs/cache-cljs"})
+;(set! *klipse-settings* {:cached_ns_root "http://localhost:9990/docs/cache-cljs"})
 
 (defn remove-chars [s]
   (if (string? s)
