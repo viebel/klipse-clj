@@ -1,5 +1,7 @@
 (defproject viebel/klipse-clj "7.5.1"
   :description "Self-hosted clojurescript library"
+  :license "GPL-3.0"
+  :url "https://github.com/viebel/klipse-clj"
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/clojurescript "1.10.238"]
                  [org.clojure/tools.reader "1.3.0"]

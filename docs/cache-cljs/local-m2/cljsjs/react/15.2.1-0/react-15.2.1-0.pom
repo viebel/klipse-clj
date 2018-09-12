@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>cljsjs</groupId>
+  <artifactId>react</artifactId>
+  <version>15.2.1-0</version>
+  <name>react</name>
+  <description>A Javascript library for building user interfaces</description>
+  <url>http://facebook.github.io/react/</url>
+  <licenses>
+    <license>
+      <url>http://opensource.org/licenses/BSD-3-Clause</url>
+      <name>BSD</name>
+      <comments/>
+    </license>
+  </licenses>
+  <scm>
+    <url>https://github.com/cljsjs/packages</url>
+    <tag>52081890cde4d78dbc58f044c4a80263cfa921db</tag>
+  </scm>
+  <dependencies/>
+</project>
