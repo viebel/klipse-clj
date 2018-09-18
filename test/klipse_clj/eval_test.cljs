@@ -18,7 +18,7 @@
     s))
 
 #_(use-fixtures :each
-              {:before (fn [] (println "before") (reset-state-eval!))})
+                {:before (fn [] (println "before") (reset-state-eval!))})
 
 (defn a= [& args]
   (apply = (map remove-chars args)))

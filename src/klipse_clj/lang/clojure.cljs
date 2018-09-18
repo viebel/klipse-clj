@@ -28,14 +28,22 @@
 (js* "if(typeof window !== \"undefined\") {window.cljs.user = {}}")
 
 
-(defonce ^:private current-ns (atom 'cljs.user))
+(defonce ^:private current-ns-eval (atom 'cljs.user))
+(defonce ^:private current-ns-compile (atom 'cljs.user))
+
+(defn reset-ns-eval! []
+  (reset! current-ns-eval 'cljs.user))
+
+(defn reset-ns-compile! []
+  (reset! current-ns-compile 'cljs.user))
 
 (defn- current-alias-map
-  []
-  (->> (merge (get-in @(create-state-eval) [::ana/namespaces @current-ns :requires])
-              (get-in @(create-state-eval) [::ana/namespaces @current-ns :require-macros]))
+  [ns]
+  (->> (merge (get-in @(create-state-eval) [::ana/namespaces ns :requires])
+              (get-in @(create-state-eval) [::ana/namespaces ns :require-macros]))
        (remove (fn [[k v]] (= k v)))
        (into {})))
+
 (defn display [value {:keys [print-length beautify-strings]}]
   (with-redefs [*print-length* print-length]
     (with-out-str (pprint/pprint
@@ -43,14 +51,12 @@
                       (symbol value)
                       value)))))
 
-(defn update-current-ns [{:keys [ns form warning error value success?]} verbose?]
+(defn update-current-ns [{:keys [ns form warning error value success?]} verbose? current-ns]
   (when-not error
     (when verbose? (js/console.info "update-current-ns:" (str ns)))
     (reset! current-ns ns)))
 
 (defn result-as-str [{:keys [ns form warning error value success?] :as args} opts]
-  (when-not error
-    (reset! current-ns ns))
   (let [status (if error :error :ok)
         res (if-not error
                 (display value opts)
@@ -89,7 +95,7 @@
 ; store the original compiler/emits - as I'm afraid things might get wrong with all the with-redefs (especially with core.async. See http://dev.clojure.org/jira/browse/CLJS-1634
 (def original-emits compiler/emits)
 
-(defn core-compile-an-exp [s {:keys [static-fns external-libs max-eval-duration compile-display-guard verbose? st]
+(defn core-compile-an-exp [s {:keys [static-fns external-libs max-eval-duration compile-display-guard verbose? st ns]
                               :or {static-fns false external-libs nil max-eval-duration min-max-eval-duration compile-display-guard false verbose? false st nil}}]
   (let [c (chan)
         max-eval-duration (max max-eval-duration min-max-eval-duration)
@@ -99,17 +105,17 @@
                      s
                      "compile.klipse"
                      {:eval       eval-for-compilation
-                      :ns         @current-ns
+                      :ns         @ns
                       :static-fns static-fns
                       :*compiler* (set! env/*compiler* st)
                       :verbose    verbose?
                       :load       (partial io/load-ns external-libs)}
                         (fn [res]
-                          (update-current-ns res verbose?)
+                          (update-current-ns res verbose? ns)
                           (put! c res))))
     c))
 
-(defn core-eval-an-exp [s {:keys [static-fns external-libs max-eval-duration verbose? st] :or {static-fns false external-libs nil max-eval-duration min-max-eval-duration verbose? false st nil}}]
+(defn core-eval-an-exp [s {:keys [static-fns external-libs max-eval-duration verbose? st ns] :or {static-fns false external-libs nil max-eval-duration min-max-eval-duration verbose? false st nil}}]
   (let [c (chan)
         max-eval-duration (max max-eval-duration min-max-eval-duration)]
     (with-redefs [compiler/emits (partial my-emits max-eval-duration)]
@@ -118,7 +124,7 @@
                                 s
                                 "my.klipse"
                                 {:eval          my-eval
-                                 :ns            @current-ns
+                                 :ns            @ns
                                  :def-emits-var true
                                  :verbose       verbose?
                                  :*compiler*    (set! env/*compiler* st)
@@ -126,7 +132,7 @@
                                  :static-fns    static-fns
                                  :load          (partial io/load-ns external-libs)}
                                 (fn [res]
-                                  (update-current-ns res verbose?)
+                                  (update-current-ns res verbose? ns)
                                   (put! c res))))
     c))
 
@@ -140,10 +146,10 @@
 (defn reader-content [r]
   (apply str (read-chars r)))
 
-(defn first-exp-and-rest [s st]
-  (binding [r/*alias-map* (current-alias-map)
-            *ns* @current-ns
-            ana/*cljs-ns* (dbg @current-ns)
+(defn first-exp-and-rest [s st ns]
+  (binding [r/*alias-map* (current-alias-map ns)
+            *ns* ns
+            ana/*cljs-ns* ns
             env/*compiler* st
             r/resolve-symbol ana/resolve-symbol
             ;; r/*data-readers* (data-readers)                 ;; see relevant code in Planck
@@ -163,7 +169,7 @@
   (loop [s s res []]
     (if (empty? s)
       res
-      (let [[exp rest-s] (first-exp-and-rest s (create-state-eval))]
+      (let [[exp rest-s] (first-exp-and-rest s (create-state-eval) @current-ns-eval)]
         (if (empty? exp)
           (recur rest-s res)
           (recur rest-s (conj res exp)))))))
@@ -178,13 +184,13 @@
 (defn core-eval [s opts]
   (go
     (try
-      (loop [[exp rest-exps] (first-exp-and-rest s (create-state-eval))
+      (loop [[exp rest-exps] (first-exp-and-rest s (create-state-eval) @current-ns-eval)
              last-res nil]
         (if (not (empty? exp))
-          (let [res (<! (core-eval-an-exp exp (assoc opts :st (create-state-eval))))]
+          (let [res (<! (core-eval-an-exp exp (assoc opts :st (create-state-eval) :ns current-ns-eval)))]
             (if (:error res)
               (populate-err res opts)
-              (recur (first-exp-and-rest rest-exps (create-state-eval))
+              (recur (first-exp-and-rest rest-exps (create-state-eval) @current-ns-eval)
                      res)))
           last-res))
       (catch js/Object e
@@ -203,14 +209,13 @@
 (defn core-compile [s opts]
   (go
     (try
-      (loop [[exp rest-exps] (dbg (first-exp-and-rest s (create-state-compile)))
+      (loop [[exp rest-exps] (first-exp-and-rest s (create-state-compile) @current-ns-compile)
              all-res ""]
         (if (not (empty? exp))
-          (let [                                            ;_ (when (ns-exp? exp) (<! (core-eval-an-exp exp (assoc opts :st (create-state-compile)))))
-                res (dbg (<! (core-compile-an-exp exp (assoc opts :st (create-state-compile)))))]
+          (let [res (<! (core-compile-an-exp exp (assoc opts :st (create-state-compile) :ns current-ns-compile)))]
             (if (:error res)
               res
-              (recur (first-exp-and-rest rest-exps (create-state-compile))
+              (recur (first-exp-and-rest rest-exps (create-state-compile) @current-ns-compile)
                      (str all-res (:value res)))))
           {:value all-res}))
       (catch js/Object e
