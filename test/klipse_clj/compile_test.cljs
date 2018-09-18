@@ -27,6 +27,7 @@
                "(ns my-project.my-ns) (def x 1) (def y 2)" "goog.provide(\"my_project.my_ns\");my_project.my_ns.x = (1); my_project.my_ns.y = (2);"
                "(if 2 3) (def x (if 2 3))" "my_project.my_ns.x= (3);"
                "(= 1 2)" "cljs.core._EQ_.call(null,(1),(2));"
+               "(def a ::a)" "aaa"
                )
              (done))))
 

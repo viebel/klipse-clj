@@ -8,7 +8,7 @@
     gadjett.core-fn
     [goog.dom :as gdom]
     [clojure.string :refer [blank?]]
-    [klipse-clj.lang.clojure.include :refer [create-state-eval]]
+    [klipse-clj.lang.clojure.include :refer [create-state-eval create-state-compile]]
     [klipse-clj.lang.clojure.guard :refer [min-max-eval-duration my-emits watchdog]]
     [klipse-clj.lang.clojure.io :as io]
     [clojure.pprint :as pprint]
@@ -89,40 +89,39 @@
 ; store the original compiler/emits - as I'm afraid things might get wrong with all the with-redefs (especially with core.async. See http://dev.clojure.org/jira/browse/CLJS-1634
 (def original-emits compiler/emits)
 
-(defn core-compile-an-exp [s {:keys [static-fns external-libs max-eval-duration compile-display-guard verbose?]
-                              :or {static-fns false external-libs nil max-eval-duration min-max-eval-duration compile-display-guard false verbose? false}}]
+(defn core-compile-an-exp [s {:keys [static-fns external-libs max-eval-duration compile-display-guard verbose? st]
+                              :or {static-fns false external-libs nil max-eval-duration min-max-eval-duration compile-display-guard false verbose? false st nil}}]
   (let [c (chan)
         max-eval-duration (max max-eval-duration min-max-eval-duration)
         the-emits (if compile-display-guard (partial my-emits max-eval-duration) original-emits)]
     (with-redefs [compiler/emits the-emits]
-      (cljs/eval-str (create-state-eval) s
-                        "cljs-in"
-                     {
-                      :eval       eval-for-compilation
+      (cljs/eval-str st
+                     s
+                     "compile.klipse"
+                     {:eval       eval-for-compilation
                       :ns         @current-ns
                       :static-fns static-fns
-                      :*compiler* (set! env/*compiler* (create-state-eval))
+                      :*compiler* (set! env/*compiler* st)
                       :verbose    verbose?
-                      :load       (partial io/load-ns external-libs)
-                      }
+                      :load       (partial io/load-ns external-libs)}
                         (fn [res]
                           (update-current-ns res verbose?)
                           (put! c res))))
     c))
 
-(defn core-eval-an-exp [s {:keys [static-fns external-libs max-eval-duration verbose?] :or {static-fns false external-libs nil max-eval-duration min-max-eval-duration verbose? false}}]
+(defn core-eval-an-exp [s {:keys [static-fns external-libs max-eval-duration verbose? st] :or {static-fns false external-libs nil max-eval-duration min-max-eval-duration verbose? false st nil}}]
   (let [c (chan)
         max-eval-duration (max max-eval-duration min-max-eval-duration)]
     (with-redefs [compiler/emits (partial my-emits max-eval-duration)]
                  ; we have to set `env/*compiler*` because `binding` and core.async don't play well together (https://www.reddit.com/r/Clojure/comments/4wrjw5/withredefs_doesnt_play_well_with_coreasync/) and the code of `eval-str` uses `binding` of `env/*compiler*`.
-                 (cljs/eval-str (create-state-eval)
+                 (cljs/eval-str st
                                 s
                                 "my.klipse"
                                 {:eval          my-eval
                                  :ns            @current-ns
                                  :def-emits-var true
                                  :verbose       verbose?
-                                 :*compiler*    (set! env/*compiler* (create-state-eval))
+                                 :*compiler*    (set! env/*compiler* st)
                                  :context       :expr
                                  :static-fns    static-fns
                                  :load          (partial io/load-ns external-libs)}
@@ -141,11 +140,11 @@
 (defn reader-content [r]
   (apply str (read-chars r)))
 
-(defn first-exp-and-rest [s]
+(defn first-exp-and-rest [s st]
   (binding [r/*alias-map* (current-alias-map)
             *ns* @current-ns
-            ana/*cljs-ns* @current-ns
-            env/*compiler* (create-state-eval)
+            ana/*cljs-ns* (dbg @current-ns)
+            env/*compiler* st
             r/resolve-symbol ana/resolve-symbol
             ;; r/*data-readers* (data-readers)                 ;; see relevant code in Planck
             ]
@@ -164,29 +163,12 @@
   (loop [s s res []]
     (if (empty? s)
       res
-      (let [[exp rest-s] (first-exp-and-rest s)]
+      (let [[exp rest-s] (first-exp-and-rest s (create-state-eval))]
         (if (empty? exp)
           (recur rest-s res)
           (recur rest-s (conj res exp)))))))
 
-(comment
-  (js/alert 1)
-  (split-expressions "::a")
-  (first-exp-and-rest "::a")
-  (r/read (rt/string-push-back-reader "::a"))
 
-  (let [s "::aa"
-        sentinel (js-obj)
-        reader (rt/string-push-back-reader s)
-        res (r/read reader false sentinel)]
-    (if (= sentinel res)
-      ["" ""]
-      (let [rest-s (reader-content reader)
-            first-exp (subs s 0 (- (count s) (count rest-s)))]
-        [(s/replace first-exp #"^[\s\n]*" "")
-         rest-s])))
-
-  )
 
 (defn populate-err [res {:keys [result-element container]}]
   (when (and container (not result-element))
@@ -196,13 +178,13 @@
 (defn core-eval [s opts]
   (go
     (try
-      (loop [[exp rest-exps] (first-exp-and-rest s)
+      (loop [[exp rest-exps] (first-exp-and-rest s (create-state-eval))
              last-res nil]
         (if (not (empty? exp))
-          (let [res (<! (core-eval-an-exp exp opts))]
+          (let [res (<! (core-eval-an-exp exp (assoc opts :st (create-state-eval))))]
             (if (:error res)
               (populate-err res opts)
-              (recur (first-exp-and-rest rest-exps)
+              (recur (first-exp-and-rest rest-exps (create-state-eval))
                      res)))
           last-res))
       (catch js/Object e
@@ -221,16 +203,17 @@
 (defn core-compile [s opts]
   (go
     (try
-      (loop [exps (split-expressions s) all-res ""]
-        (if (seq exps)
-          (let [exp (first exps)
-                _ (when (ns-exp? exp) (<! (core-eval-an-exp exp opts)))
-                res (<! (core-compile-an-exp exp opts))]
+      (loop [[exp rest-exps] (dbg (first-exp-and-rest s (create-state-compile)))
+             all-res ""]
+        (if (not (empty? exp))
+          (let [                                            ;_ (when (ns-exp? exp) (<! (core-eval-an-exp exp (assoc opts :st (create-state-compile)))))
+                res (dbg (<! (core-compile-an-exp exp (assoc opts :st (create-state-compile)))))]
             (if (:error res)
               res
-              (recur (rest exps) (str all-res (:value res)))))
+              (recur (first-exp-and-rest rest-exps (create-state-compile))
+                     (str all-res (:value res)))))
           {:value all-res}))
-      (catch :default e
+      (catch js/Object e
         {:error e}))))
 
 

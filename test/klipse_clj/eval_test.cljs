@@ -135,6 +135,15 @@
         (done))))
 
 
+(deftest test-eval-macro-chars
+  "eval with types"
+  (async done
+    (go (are [input-clj output-clj]
+          (a= (second (<! (the-eval input-clj))) output-clj)
+          "#js []" #js [])
+        (done))))
+
+
 
 (deftest test-eval-functions
   "eval with functions"

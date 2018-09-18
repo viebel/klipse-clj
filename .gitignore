@@ -1,7 +1,6 @@
 .idea/
 *.iml
 out/
-resources/
 target/
 node_modules
 .cpcache/
