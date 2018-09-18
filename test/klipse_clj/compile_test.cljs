@@ -18,7 +18,7 @@
     (string/replace s #"\n|\s" "")
     (catch js/Object e
       (println "error in remove-chars " s)
-      "" #_(throw e))))
+      (throw e))))
 
 (defn a= [& args]
   (apply = (map remove-chars args)))
@@ -48,7 +48,6 @@
         "(def abb ::a)" "cljs.user.abb = new cljs.core.Keyword(\"cljs.user\",\"a\",\"cljs.user/a\",(-1455139307));\n")
       (done))))
 
-
 (deftest test-tagged-literals
   "tagged literals"
   (async done
@@ -61,10 +60,6 @@
         "(def a #uuid \"f81d4fae-7dec-11d0-a765-00a0c91e6bf6\")" "cljs.user.a = new cljs.core.UUID(\"f81d4fae-7dec-11d0-a765-00a0c91e6bf6\", 1954290834);\n")
       (done))))
 
-(not (a=  ""))
-
-(not (a= ""))
-
 (deftest static-fn
   "compile with static dispatch (:static-fns true)"
   (async done
@@ -72,4 +67,4 @@
                  (a= (second (<! (str-compile input {:static-fns true}))) output)
                "(= 1 2)" "cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2((1),(2));")
              (done))))
-(not (a=  "aaa"))
+
