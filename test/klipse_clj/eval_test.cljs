@@ -8,7 +8,7 @@
     [klipse-clj.lang.clojure.include :refer [reset-state-eval!]]
     [cljs.core.async :refer [<!]]
     [clojure.string :as string]
-    [klipse-clj.lang.clojure :refer [the-eval result-as-str split-expressions]]))
+    [klipse-clj.lang.clojure :refer [reset-ns-eval! the-eval result-as-str split-expressions]]))
 
 ;(set! *klipse-settings* {:cached_ns_root "http://localhost:9990/docs/cache-cljs"})
 
@@ -17,8 +17,10 @@
     (string/replace s #"\n|\s" "")
     s))
 
-#_(use-fixtures :each
-                {:before (fn [] (println "before") (reset-state-eval!))})
+(use-fixtures :each
+                {:before (fn []
+                           (reset-state-eval!)
+                           (reset-ns-eval!))})
 
 (defn a= [& args]
   (apply = (map remove-chars args)))
@@ -136,11 +138,14 @@
 
 
 (deftest test-eval-macro-chars
-  "eval with types"
+  "tagged literals"
   (async done
-    (go (are [input-clj output-clj]
-          (a= (second (<! (the-eval input-clj))) output-clj)
-          "#js []" #js [])
+    (go (are [input-clj type-res]
+          (= (type (second (<! (the-eval input-clj)))) type-res)
+          "#queue [1]" cljs.core/PersistentQueue
+          "#js []" js/Array
+          "#inst \"2018-09-08\"" js/Date
+          "#uuid \"f81d4fae-7dec-11d0-a765-00a0c91e6bf6\"" cljs.core/UUID)
         (done))))
 
 

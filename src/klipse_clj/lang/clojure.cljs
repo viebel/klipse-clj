@@ -6,6 +6,7 @@
   (:require
     klipse-clj.lang.clojure.bundled-namespaces
     gadjett.core-fn
+    [cljs.tagged-literals :as tags]
     [goog.dom :as gdom]
     [clojure.string :refer [blank?]]
     [klipse-clj.lang.clojure.include :refer [create-state-eval create-state-compile]]
@@ -146,13 +147,16 @@
 (defn reader-content [r]
   (apply str (read-chars r)))
 
+(defn- data-readers []
+  tags/*cljs-data-readers*)
+
 (defn first-exp-and-rest [s st ns]
   (binding [r/*alias-map* (current-alias-map ns)
             *ns* ns
             ana/*cljs-ns* ns
             env/*compiler* st
             r/resolve-symbol ana/resolve-symbol
-            ;; r/*data-readers* (data-readers)                 ;; see relevant code in Planck
+            r/*data-readers* (data-readers)                 ;; see relevant code in Planck
             ]
     (let [sentinel (js-obj)
           reader (rt/string-push-back-reader s)

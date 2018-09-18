@@ -9,10 +9,9 @@
     [klipse-clj.lang.clojure :refer [str-compile reset-ns-compile!]]))
 
 (use-fixtures :each
-              {:before (fn [] (println "before test")
+              {:before (fn []
                          (reset-state-compile!)
-                         (reset-ns-compile!)
-                         )})
+                         (reset-ns-compile!))})
 
 (defn remove-chars [s]
   (try
@@ -50,6 +49,21 @@
       (done))))
 
 
+(deftest test-tagged-literals
+  "tagged literals"
+  (async done
+    (go
+      (are [input output]
+        (a= (second (<! (str-compile input {:verbose? true}))) output)
+        "#js []" "[];"
+        "(def c #queue [1])" "cljs.user.c = cljs.core.into.call(null,cljs.core.PersistentQueue.EMPTY,new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [(1)], null));\n"
+        "(def b #inst \"2018-09-01\")" "cljs.user.b = new Date(1535760000000);\n"
+        "(def a #uuid \"f81d4fae-7dec-11d0-a765-00a0c91e6bf6\")" "cljs.user.a = new cljs.core.UUID(\"f81d4fae-7dec-11d0-a765-00a0c91e6bf6\", 1954290834);\n")
+      (done))))
+
+(not (a=  ""))
+
+(not (a= ""))
 
 (deftest static-fn
   "compile with static dispatch (:static-fns true)"
