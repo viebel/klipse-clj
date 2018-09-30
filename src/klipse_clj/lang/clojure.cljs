@@ -9,7 +9,7 @@
     [cljs.tagged-literals :as tags]
     [goog.dom :as gdom]
     [clojure.string :refer [blank?]]
-    [klipse-clj.lang.clojure.include :refer [create-state-eval create-state-compile]]
+    [klipse-clj.repl :refer [st create-state-compile current-ns-eval current-ns-compile reset-ns-eval! reset-ns-compile!]]
     [klipse-clj.lang.clojure.guard :refer [min-max-eval-duration my-emits watchdog]]
     [klipse-clj.lang.clojure.io :as io]
     [clojure.pprint :as pprint]
@@ -23,20 +23,19 @@
     [cljs.env :as env]
     [cljs.js :as cljs]))
 
-;; create cljs.user
-;(set! (.. js/window -cljs -user) #js {})
-; the following code is advanced compilation friendly
-(js* "if(typeof window !== \"undefined\") {window.cljs.user = {}}")
 
+(declare core-eval-an-exp)
 
-(defonce ^:private current-ns-eval (atom 'cljs.user))
-(defonce ^:private current-ns-compile (atom 'cljs.user))
+(defn init-custom-macros []
+  (doseq [my-macros-exp ["(require '[klipse-clj.repl :refer-macros [doc]])"
+                         "(require '[klipse-clj.macros :refer-macros [dbg]])"]]
+    (core-eval-an-exp  my-macros-exp {:st @st :ns current-ns-eval})))
 
-(defn reset-ns-eval! []
-  (reset! current-ns-eval 'cljs.user))
-
-(defn reset-ns-compile! []
-  (reset! current-ns-compile 'cljs.user))
+(defn create-state-eval []
+  (when (nil? @st)
+    (reset! st (cljs/empty-state))
+    (init-custom-macros))
+  @st)
 
 (defn- current-alias-map
   [ns]

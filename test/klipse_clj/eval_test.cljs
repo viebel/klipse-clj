@@ -5,12 +5,12 @@
   (:require
     [cljs.test :refer [deftest is are async use-fixtures]]
     [klipse-clj.lang.clojure.io :refer [*klipse-settings*]]
-    [klipse-clj.lang.clojure.include :refer [reset-state-eval!]]
+    [klipse-clj.repl :refer [reset-state-eval! reset-ns-eval!]]
     [cljs.core.async :refer [<!]]
     [clojure.string :as string]
-    [klipse-clj.lang.clojure :refer [reset-ns-eval! the-eval result-as-str split-expressions]]))
+    [klipse-clj.lang.clojure :refer [the-eval result-as-str split-expressions]]))
 
-;(set! *klipse-settings* {:cached_ns_root "http://localhost:9990/docs/cache-cljs"})
+;(set! *klipse-settings* {:cached_ns_root "http://localhost:8080/"})
 
 (defn remove-chars [s]
   (if (string? s)
@@ -170,6 +170,26 @@
           )
         (done))))
 
+
+(deftest doc-test
+  "doc"
+  (async done
+    (go (are [input-clj output-clj]
+          (b= (str (second (<! (the-eval input-clj)))) output-clj)
+          "(with-out-str (doc map))" "-------------------------\ncljs.core/map\n([f] [f coll] [f c1 c2] [f c1 c2 c3] [f c1 c2 c3 & colls])\n  Returns a lazy sequence consisting of the result of applying f to\n  the set of first items of each coll, followed by applying f to the\n  set of second items in each coll, until any one of the colls is\n  exhausted.  Any remaining items in other colls are ignored. Function\n  f should accept number-of-colls arguments. Returns a transducer when\n  no collection is provided.\n"
+          )
+        (done))))
+
+(deftest dbg-test
+  "doc"
+  (async done
+    (go (are [input-clj output-clj]
+          (b= (str (second (<! (the-eval input-clj)))) output-clj)
+          "(with-out-str (dbg (map inc [1 2 3])))" "(map inc [1 2 3]):  (2 3 4)\n"
+          "(dbg (map inc [1 2 3]))" "(2 3 4)"
+          )
+        (done))))
+
 (deftest eval-in-ns
   "eval properly code that is related to ns"
   (async done
@@ -187,6 +207,8 @@
     "(+ 1 2)    (+ 2 3)" ["(+ 1 2)" "(+ 2 3)"]
     ":foo" [":foo"]
     "::foo" ["::foo"]))
+
+
 
 ;;;; DISPLAY
 (deftest display-evaluation-with-errors

@@ -5,8 +5,8 @@
     [cljs.test :refer [is are async deftest use-fixtures]]
     [cljs.core.async :refer [<!]]
     [clojure.string :as string]
-    [klipse-clj.lang.clojure.include :refer [reset-state-compile!]]
-    [klipse-clj.lang.clojure :refer [str-compile reset-ns-compile!]]))
+    [klipse-clj.repl :refer [reset-state-compile! reset-ns-compile!]]
+    [klipse-clj.lang.clojure :refer [str-compile]]))
 
 (use-fixtures :each
               {:before (fn []
