@@ -8,3 +8,5 @@ node_modules
 figwheel_server.log
 .lein-repl-history
 .nrepl-port
+pom.xml
+pom.xml.asc

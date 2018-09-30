@@ -2,6 +2,8 @@
   (:require cljs.analyzer.api
             cljs.analyzer
             cljs.env
+            cljs.repl
+            klipse-clj.repl
             clojure.spec.alpha
             clojure.walk
             clojure.zip

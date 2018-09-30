@@ -5,7 +5,7 @@
   (:require
    [cljs.reader :refer [read-string]]
    [clojure.string :as s]
-   [klipse-clj.lang.clojure.include :refer [def-a-var]]
+   [klipse-clj.repl :refer [def-a-var]]
    [clojure.walk :as ww]
    [clojure.string :as string :refer [join split lower-case]]
    [cljs-http.client :as http]
@@ -138,7 +138,7 @@
         (src-cb nil)))))
 
 (defn cached-macro-ns-regexp []
-  (:clojure_cached_macro_ns_regexp *klipse-settings* #"cljs\.reader|cljs\.core\.[async|match].*|clojure\.math\.macros|gadjett\.core|cljs\.test|clojure.test.check.*|reagent\..*|om\..*|cljs\.spec.*|cljs-time\..*|re-frame\..*|net\.cgrand\.macrovich|reagent-forms\..*|ajax\.macros|poppea"))
+  (:clojure_cached_macro_ns_regexp *klipse-settings* #"klipse-clj.*|cljs\.reader|cljs\.core\.[async|match].*|clojure\.math\.macros|gadjett\.core|cljs\.test|clojure.test.check.*|reagent\..*|om\..*|cljs\.spec.*|cljs-time\..*|re-frame\..*|net\.cgrand\.macrovich|reagent-forms\..*|ajax\.macros|poppea"))
 
 (defn cached-macro-ns? [name]
   (re-matches (cached-macro-ns-regexp) (str name)))
@@ -204,7 +204,7 @@
   (if (or (buggy-bundled-ns-ignore? name)
           (custom-bundled-ns-ignore? name))
     false
-    (!> js/goog.getObjectByName (str (munge name))))) ; (:require goog breaks the build see http://dev.clojure.org/jira/browse/CLJS-1677
+    (not (nil? (!> js/goog.getObjectByName (str (munge name))))))) ; (:require goog breaks the build see http://dev.clojure.org/jira/browse/CLJS-1677
 
 (defn cljsjs? [name]
   (re-matches #"cljsjs\..*" (str name)))

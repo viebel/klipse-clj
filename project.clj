@@ -1,4 +1,4 @@
-(defproject viebel/klipse-clj "7.5.1"
+(defproject viebel/klipse-clj "7.5.3"
   :description "Self-hosted clojurescript library"
   :license "GPL-3.0"
   :url "https://github.com/viebel/klipse-clj"
@@ -15,11 +15,6 @@
   :plugins [[lein-cljsbuild "1.1.5"]
             [lein-hiera "0.9.5"]
             [lein-doo "0.1.10"]]
-  :resource-paths ["scripts" "src" "resources" "target"]
-  :profiles {:dev {:dependencies [[cider/piggieback "0.3.9"]
-                                  [com.bhauman/rebel-readline-cljs "0.1.4"]
-                                  [com.bhauman/figwheel-main "0.1.9"]]
-                   :repl-options {:nrepl-middleware [cider.piggieback/wrap-cljs-repl]}}}
   :hiera {:path "deps-graph.png"
           :vertical true
           :show-external false
