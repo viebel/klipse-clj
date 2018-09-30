@@ -9,7 +9,7 @@
     [cljs.tagged-literals :as tags]
     [goog.dom :as gdom]
     [clojure.string :refer [blank?]]
-    [klipse-clj.repl :refer [create-state-eval create-state-compile current-ns-eval current-ns-compile reset-ns-eval! reset-ns-compile!]]
+    [klipse-clj.repl :refer [st create-state-compile current-ns-eval current-ns-compile reset-ns-eval! reset-ns-compile!]]
     [klipse-clj.lang.clojure.guard :refer [min-max-eval-duration my-emits watchdog]]
     [klipse-clj.lang.clojure.io :as io]
     [clojure.pprint :as pprint]
@@ -22,6 +22,20 @@
     [cljs.core.async :refer [timeout chan put! <!]]
     [cljs.env :as env]
     [cljs.js :as cljs]))
+
+
+(declare core-eval-an-exp)
+
+(defn init-custom-macros []
+  (doseq [my-macros-exp ["(require '[klipse-clj.repl :refer-macros [doc]])"
+                         "(require '[klipse-clj.macros :refer-macros [dbg]])"]]
+    (core-eval-an-exp  my-macros-exp {:st @st :ns current-ns-eval})))
+
+(defn create-state-eval []
+  (when (nil? @st)
+    (reset! st (cljs/empty-state))
+    (init-custom-macros))
+  @st)
 
 (defn- current-alias-map
   [ns]

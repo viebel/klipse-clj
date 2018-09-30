@@ -27,11 +27,6 @@
 
 (def st (atom nil))
 
-(defn create-state-eval []
-  (when (nil? @st)
-    (reset! st (cljs/empty-state)))
-  @st)
-
 (defn reset-state-eval! []
   (reset! st nil))
 
@@ -50,7 +45,7 @@
    (eval-form (.-name *ns*)))
   ([form ns]
    (let [result (atom nil)]
-     (cljs/eval (create-state-eval) form
+     (cljs/eval @st form
                 {:ns            ns
                  :context       :expr
                  :eval          cljs/js-eval

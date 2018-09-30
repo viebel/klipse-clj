@@ -176,7 +176,7 @@
   (async done
     (go (are [input-clj output-clj]
           (b= (str (second (<! (the-eval input-clj)))) output-clj)
-          "(require-macros '[klipse-clj.repl :refer [doc]]) (with-out-str (doc map))" "-------------------------\ncljs.core/map\n([f] [f coll] [f c1 c2] [f c1 c2 c3] [f c1 c2 c3 & colls])\n  Returns a lazy sequence consisting of the result of applying f to\n  the set of first items of each coll, followed by applying f to the\n  set of second items in each coll, until any one of the colls is\n  exhausted.  Any remaining items in other colls are ignored. Function\n  f should accept number-of-colls arguments. Returns a transducer when\n  no collection is provided.\n"
+          "(with-out-str (doc map))" "-------------------------\ncljs.core/map\n([f] [f coll] [f c1 c2] [f c1 c2 c3] [f c1 c2 c3 & colls])\n  Returns a lazy sequence consisting of the result of applying f to\n  the set of first items of each coll, followed by applying f to the\n  set of second items in each coll, until any one of the colls is\n  exhausted.  Any remaining items in other colls are ignored. Function\n  f should accept number-of-colls arguments. Returns a transducer when\n  no collection is provided.\n"
           )
         (done))))
 
@@ -185,7 +185,7 @@
   (async done
     (go (are [input-clj output-clj]
           (b= (str (second (<! (the-eval input-clj)))) output-clj)
-          "(require-macros '[klipse-clj.macros :refer [dbg]]) (with-out-str (dbg (map inc [1 2 3])))" "(map inc [1 2 3]):  (2 3 4)\n"
+          "(with-out-str (dbg (map inc [1 2 3])))" "(map inc [1 2 3]):  (2 3 4)\n"
           "(dbg (map inc [1 2 3]))" "(2 3 4)"
           )
         (done))))
