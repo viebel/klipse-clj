@@ -10,7 +10,8 @@
     [clojure.string :as string]
     [klipse-clj.lang.clojure :refer [the-eval result-as-str split-expressions]]))
 
-;(set! *klipse-settings* {:cached_ns_root "http://localhost:8080/"})
+(set! *klipse-settings* {:cached_ns_root "http://localhost:8080/"
+                         :verbose true})
 
 (defn remove-chars [s]
   (if (string? s)
@@ -159,7 +160,6 @@
           )
         (done))))
 
-
 (deftest test-eval-vars
   "eval with vars"
   (async done
@@ -172,7 +172,7 @@
 
 
 (deftest doc-test
-  "doc"
+  "doc macro"
   (async done
     (go (are [input-clj output-clj]
           (b= (str (second (<! (the-eval input-clj)))) output-clj)
@@ -181,7 +181,7 @@
         (done))))
 
 (deftest dbg-test
-  "doc"
+  "dbg macro"
   (async done
     (go (are [input-clj output-clj]
           (b= (str (second (<! (the-eval input-clj)))) output-clj)

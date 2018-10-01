@@ -27,14 +27,13 @@
 (declare core-eval-an-exp)
 
 (defn init-custom-macros []
-  (doseq [my-macros-exp ["(require '[klipse-clj.repl :refer-macros [doc]])"
-                         "(require '[klipse-clj.macros :refer-macros [dbg]])"]]
-    (core-eval-an-exp  my-macros-exp {:st @st :ns current-ns-eval})))
+  (doseq [my-macros []]))
 
 (defn create-state-eval []
   (when (nil? @st)
     (reset! st (cljs/empty-state))
-    (init-custom-macros))
+    (core-eval-an-exp "(require '[klipse-clj.repl :refer-macros [doc]])" {:st @st :ns current-ns-eval})
+    (core-eval-an-exp "(require-macros '[klipse-clj.macros :refer [dbg]])" {:st @st :ns current-ns-eval}))
   @st)
 
 (defn- current-alias-map
