@@ -4,14 +4,16 @@
     [cljs.core.async.macros :refer [go]])
   (:require
     [cljs.test :refer [deftest is are async use-fixtures]]
-    [klipse-clj.lang.clojure.io :refer [*klipse-settings*]]
+    [klipse-clj.lang.clojure.io :refer [*klipse-settings* *verbose?*]]
     [klipse-clj.repl :refer [reset-state-eval! reset-ns-eval!]]
     [cljs.core.async :refer [<!]]
     [clojure.string :as string]
-    [klipse-clj.lang.clojure :refer [the-eval result-as-str split-expressions]]))
+    [klipse-clj.lang.clojure :refer [create-state-eval the-eval result-as-str split-expressions]]))
 
 (set! *klipse-settings* {:cached_ns_root "http://localhost:8080/"
                          :verbose true})
+
+(set! *verbose?* true)
 
 (defn remove-chars [s]
   (if (string? s)
@@ -19,9 +21,11 @@
     s))
 
 (use-fixtures :each
-                {:before (fn []
-                           (reset-state-eval!)
-                           (reset-ns-eval!))})
+              {:before #(async done
+                          (go (reset-state-eval!)
+                              (reset-ns-eval!)
+                              (<! (create-state-eval))
+                              (done)))})
 
 (defn a= [& args]
   (apply = (map remove-chars args)))
@@ -30,6 +34,24 @@
   (and (= status-a status-b)
        (a= a b)))
 
+(deftest doc-test
+  "doc macro"
+  (async done
+    (go (are [input-clj output-clj]
+          (b= (str (second (<! (the-eval input-clj)))) output-clj)
+          "(with-out-str (doc map))" "-------------------------\ncljs.core/map\n([f] [f coll] [f c1 c2] [f c1 c2 c3] [f c1 c2 c3 & colls])\n  Returns a lazy sequence consisting of the result of applying f to\n  the set of first items of each coll, followed by applying f to the\n  set of second items in each coll, until any one of the colls is\n  exhausted.  Any remaining items in other colls are ignored. Function\n  f should accept number-of-colls arguments. Returns a transducer when\n  no collection is provided.\n"
+          )
+        (done))))
+
+(deftest dbg-test
+  "dbg macro"
+  (async done
+    (go (are [input-clj output-clj]
+          (b= (str (second (<! (the-eval input-clj)))) output-clj)
+          "(with-out-str (dbg (map inc [1 2 3])))" "(map inc [1 2 3]):  (2 3 4)\n"
+          "(dbg (map inc [1 2 3]))" "(2 3 4)"
+          )
+        (done))))
 
 (deftest test-eval-error
   "eval with expected failures"
@@ -167,26 +189,6 @@
           (b= (str (second (<! (the-eval input-clj)))) output-clj)
           "(ns my.vars) (def a 1)" "#'my.vars/a"
           "(ns my.vars2) (def b 1) b" "1"
-          )
-        (done))))
-
-
-(deftest doc-test
-  "doc macro"
-  (async done
-    (go (are [input-clj output-clj]
-          (b= (str (second (<! (the-eval input-clj)))) output-clj)
-          "(with-out-str (doc map))" "-------------------------\ncljs.core/map\n([f] [f coll] [f c1 c2] [f c1 c2 c3] [f c1 c2 c3 & colls])\n  Returns a lazy sequence consisting of the result of applying f to\n  the set of first items of each coll, followed by applying f to the\n  set of second items in each coll, until any one of the colls is\n  exhausted.  Any remaining items in other colls are ignored. Function\n  f should accept number-of-colls arguments. Returns a transducer when\n  no collection is provided.\n"
-          )
-        (done))))
-
-(deftest dbg-test
-  "dbg macro"
-  (async done
-    (go (are [input-clj output-clj]
-          (b= (str (second (<! (the-eval input-clj)))) output-clj)
-          "(with-out-str (dbg (map inc [1 2 3])))" "(map inc [1 2 3]):  (2 3 4)\n"
-          "(dbg (map inc [1 2 3]))" "(2 3 4)"
           )
         (done))))
 

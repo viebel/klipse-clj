@@ -27,19 +27,25 @@
 (declare core-eval-an-exp)
 
 (defn init-custom-macros []
-  (doseq [my-macros []]))
+  (go
+    (doseq [my-macros ["(require '[klipse-clj.repl :refer-macros [doc]])"
+                       "(require-macros '[klipse-clj.macros :refer [dbg]])"]]
+      (<! (core-eval-an-exp my-macros {:st @st :ns current-ns-eval})))))
 
 (defn create-state-eval []
-  (when (nil? @st)
-    (reset! st (cljs/empty-state))
-    (core-eval-an-exp "(require '[klipse-clj.repl :refer-macros [doc]])" {:st @st :ns current-ns-eval})
-    (core-eval-an-exp "(require-macros '[klipse-clj.macros :refer [dbg]])" {:st @st :ns current-ns-eval}))
-  @st)
+  (go
+    (when (nil? @st)
+      (reset! st (cljs/empty-state))
+      (<! (init-custom-macros)))
+    @st))
+
+
+
 
 (defn- current-alias-map
   [ns]
-  (->> (merge (get-in @(create-state-eval) [::ana/namespaces ns :requires])
-              (get-in @(create-state-eval) [::ana/namespaces ns :require-macros]))
+  (->> (merge (get-in @@st [::ana/namespaces ns :requires])
+              (get-in @@st [::ana/namespaces ns :require-macros]))
        (remove (fn [[k v]] (= k v)))
        (into {})))
 
@@ -171,7 +177,7 @@
   (loop [s s res []]
     (if (empty? s)
       res
-      (let [[exp rest-s] (first-exp-and-rest s (create-state-eval) @current-ns-eval)]
+      (let [[exp rest-s] (first-exp-and-rest s @st @current-ns-eval)]
         (if (empty? exp)
           (recur rest-s res)
           (recur rest-s (conj res exp)))))))
@@ -186,13 +192,14 @@
 (defn core-eval [s opts]
   (go
     (try
-      (loop [[exp rest-exps] (first-exp-and-rest s (create-state-eval) @current-ns-eval)
+      (<! (create-state-eval))
+      (loop [[exp rest-exps] (first-exp-and-rest s @st @current-ns-eval)
              last-res nil]
         (if (not (empty? exp))
-          (let [res (<! (core-eval-an-exp exp (assoc opts :st (create-state-eval) :ns current-ns-eval)))]
+          (let [res (<! (core-eval-an-exp exp (assoc opts :st @st :ns current-ns-eval)))]
             (if (:error res)
               (populate-err res opts)
-              (recur (first-exp-and-rest rest-exps (create-state-eval) @current-ns-eval)
+              (recur (first-exp-and-rest rest-exps @st @current-ns-eval)
                      res)))
           last-res))
       (catch js/Object e
