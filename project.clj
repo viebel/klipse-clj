@@ -9,26 +9,15 @@
                  [im.chit/purnam "0.5.2"]
                  [viebel/codemirror-parinfer "0.0.3"]
                  [cljs-http "0.1.42"]
-                 [viebel/gadjett "0.5.2"]]
+                 [viebel/gadjett "0.5.2"]
+                 [com.bhauman/figwheel-main "0.1.9-SNAPSHOT"]]
   :clean-targets ^{:protect false} ["resources/public"
                                     "resources/private"]
   :plugins [[lein-cljsbuild "1.1.5"]
             [lein-hiera "0.9.5"]
-            [lein-doo "0.1.10"]]
+            [lein-tools-deps "0.4.1"]]
   :hiera {:path "deps-graph.png"
           :vertical true
           :show-external false
           :cluster-depth 2
-          :trim-ns-prefix true}
-  :cljsbuild {:builds {:dev {:source-paths ["src"]
-                             :compiler {:output-to "resources/public/main.js"
-                                        :output-dir "resources/public"
-                                        :verbose false
-                                        :optimizations :none}}
-                       :test {:source-paths ["src" "test"]
-                              :compiler {
-                                         :output-to "resources/private/test/klipse.testable.js"
-                                         :verbose false
-                                         :target :nodejs
-                                         :main test.runner
-                                         :optimizations :none}}}})
+          :trim-ns-prefix true})
