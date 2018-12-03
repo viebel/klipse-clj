@@ -14,7 +14,6 @@
     [klipse-clj.lang.clojure.io :as io]
     [clojure.pprint :as pprint]
     [cljs.analyzer :as ana]
-    [cljs.reader :refer [read-string]]
     [cljs.tools.reader :as r]
     [cljs.tools.reader.reader-types :as rt]
     [clojure.string :as s]
@@ -173,6 +172,21 @@
            rest-s])))))
 
 
+(defn read-string
+  "A good way to read a string as cljs.reader/read-string has many bugs."
+  ([s] (read-string s @st @current-ns-eval))
+  ([s st ns]
+   (binding [r/*alias-map* (current-alias-map ns)
+             *ns* ns
+             ana/*cljs-ns* ns
+             env/*compiler* st
+             r/resolve-symbol ana/resolve-symbol
+             r/*data-readers* (data-readers)                 ;; see relevant code in Planck
+             ]
+     (let [reader (rt/string-push-back-reader s)]
+        (r/read reader)))))
+
+
 (defn split-expressions [s]
   (loop [s s res []]
     (if (empty? s)
@@ -204,15 +218,6 @@
           last-res))
       (catch js/Object e
         (populate-err {:error e} opts)))))
-
-(defn ns-exp?
-  "receives a string.
-  returns true if the expression is a string of an ns-form like (ns my.foo...) or (require 'my.foo).
-  "
-  [exp]
-  (let [form (read-string exp)]
-    (and (seq? form)
-         ('#{ns require-macros use use-macros import refer-clojure require} (first form)))))
 
 
 (defn core-compile [s opts]
