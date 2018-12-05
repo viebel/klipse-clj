@@ -9,7 +9,7 @@
     [cljs.tagged-literals :as tags]
     [goog.dom :as gdom]
     [clojure.string :refer [blank?]]
-    [klipse-clj.repl :refer [st create-state-compile current-ns-eval current-ns-compile reset-ns-eval! reset-ns-compile!]]
+    [klipse-clj.repl :refer [current-alias-map st create-state-compile current-ns-eval current-ns-compile reset-ns-eval! reset-ns-compile!]]
     [klipse-clj.lang.clojure.guard :refer [min-max-eval-duration my-emits watchdog]]
     [klipse-clj.lang.clojure.io :as io]
     [clojure.pprint :as pprint]
@@ -42,13 +42,6 @@
       (reset! st (cljs/empty-state))
       (<! (init-custom-macros)))
     @st))
-
-(defn- current-alias-map
-  [ns]
-  (->> (merge (get-in @@st [::ana/namespaces ns :requires])
-              (get-in @@st [::ana/namespaces ns :require-macros]))
-       (remove (fn [[k v]] (= k v)))
-       (into {})))
 
 (defn display [value {:keys [print-length beautify-strings]}]
   (with-redefs [*print-length* print-length]
