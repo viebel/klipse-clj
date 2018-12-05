@@ -10,7 +10,8 @@
     [clojure.string :as string]
     [klipse-clj.lang.clojure :refer [read-string create-state-eval the-eval result-as-str split-expressions]]))
 
-#_(set! *klipse-settings* {:cached_ns_root "http://localhost:8080/"
+(set! *klipse-settings* {;:cached_ns_root "http://localhost:8080/"
+                         :bundled_ns_root "cljs-out/dev/"
                          :verbose true})
 
 (set! *verbose?* true)

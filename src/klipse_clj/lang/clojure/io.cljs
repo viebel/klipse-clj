@@ -187,9 +187,10 @@
                 (try-to-load-ns filenames :clj :source src-cb))))))
 
 
-;(def cache-url "https://storage.googleapis.com/app.klipse.tech/fig/js/")
-(def cache-url "cljs-out/dev/")
-
+(defn bundled-ns-root []
+  (:bundled_ns_root *klipse-settings*
+                    "https://storage.googleapis.com/app.klipse.tech/fig/js/"
+                    #_"cljs-out/dev/" ))
 
 (defmethod load-ns :gist [external-libs {:keys [path]} src-cb]
   (let [path (string/replace path #"gist_" "")
@@ -263,7 +264,7 @@
                           (when *verbose?* (js/console.info "load-ns :cljs skipping" (str name)))
                           (src-cb {:lang :js :source ""}))
     (bundled-ns? name) (let [_ (when *verbose?* (js/console.log "load-ns :cljs bundled" name))
-                             filenames (map #(str cache-url path % ".cache.json") cljs-suffixes)]
+                             filenames (map #(str (bundled-ns-root) path % ".cache.json") cljs-suffixes)]
                          (go
                            (when-not (<! (try-to-load-ns filenames :js :cache src-cb :transform edn :can-recover? true))
                              ; sometimes it's a javascript namespace that is cached e.g com.cognitect.transit from transit-js
