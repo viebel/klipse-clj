@@ -40,9 +40,9 @@
     (go (are [input-clj output-clj]
           (b= (str (second (<! (the-eval input-clj)))) output-clj)
           "(with-out-str (doc map))" "-------------------------\ncljs.core/map\n([f] [f coll] [f c1 c2] [f c1 c2 c3] [f c1 c2 c3 & colls])\n  Returns a lazy sequence consisting of the result of applying f to\n  the set of first items of each coll, followed by applying f to the\n  set of second items in each coll, until any one of the colls is\n  exhausted.  Any remaining items in other colls are ignored. Function\n  f should accept number-of-colls arguments. Returns a transducer when\n  no collection is provided.\n"
-          "(with-out-str (doc fn))" "a"
+          "(with-out-str (doc when))" "-------------------------\ncljs.core/when\n([test & body])\nMacro\n  Evaluates test. If logical true, evaluates body in an implicit do.\n"
           "(require 'clojure.set) (with-out-str (doc clojure.set))" "-------------------------\nclojure.set\n  Set operations such as union/intersection.\n"
-          "(ns aa.bb \"great ns\") (with-out-str (doc aa.bb)) " "bb"
+          ;"(ns aa.bb \"great ns\") (with-out-str (doc aa.bb)) " "bb"
           )
         (done))))
 

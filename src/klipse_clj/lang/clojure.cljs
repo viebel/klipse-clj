@@ -25,8 +25,13 @@
 
 (declare core-eval-an-exp)
 
+
+(defn load-core-macros-cache []
+  (io/load-ns-from-file @st 'cljs.core$macros "cljs-out/dev/cljs/core$macros.cljc.cache.json"))
+
 (defn init-custom-macros []
   (go
+    (<! (load-core-macros-cache))
     (doseq [my-macros ["(require '[klipse-clj.repl :refer-macros [doc]])"
                        "(require-macros '[klipse-clj.macros :refer [dbg]])"]]
       (<! (core-eval-an-exp my-macros {:st @st :ns current-ns-eval})))))
@@ -37,9 +42,6 @@
       (reset! st (cljs/empty-state))
       (<! (init-custom-macros)))
     @st))
-
-
-
 
 (defn- current-alias-map
   [ns]
@@ -298,3 +300,5 @@
   a
   (println 99)
   )
+
+
