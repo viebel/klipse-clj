@@ -439,22 +439,26 @@
                    (filter #(string/starts-with? % kw-source)))
                  (spec-registered-keywords @current-ns-eval))))))
 
-(defn- ^:export get-completions
+(defn get-completions
   "Returns an array of the buffer-match-suffix, along with completions for the
   entered text. If one completion is returned the line should be completed to
   match it (in which the completion may actually only be a longest prefix from
   the list of candiates), otherwise the list of completions should be
   displayed."
   [buffer]
-  (if-let [kw-name (local-keyword buffer)]
-    (local-keyword-completions kw-name)
-    (let [top-form? (re-find #"^\s*\(\s*[^()\s]*$" buffer)
-          typed-ns  (second (re-find #"\(*(\b[a-zA-Z0-9-.<>*=&?]+)/[a-zA-Z0-9-]*$" buffer))]
-      (let [buffer-match-suffix (first (re-find #":?([a-zA-Z0-9-.<>*=&?]*|^\(/)$" buffer))
-            completions         (sort (filter (partial is-completion? buffer-match-suffix)
-                                        (completion-candidates top-form? typed-ns)))
-            common-prefix (longest-common-prefix completions)]
-        (if (or (empty? common-prefix)
-                (= common-prefix buffer-match-suffix))
-          (clj->js (into [buffer-match-suffix] completions))
-          #js [buffer-match-suffix common-prefix])))))
+  (if (nil? @st)
+    (with-meta [buffer] {:ready false})
+    (if-let [kw-name (local-keyword buffer)]
+      (local-keyword-completions kw-name)
+      (let [top-form? (re-find #"^\s*\(\s*[^()\s]*$" buffer)
+            typed-ns  (second (re-find #"\(*(\b[a-zA-Z0-9-.<>*=&?]+)/[a-zA-Z0-9-]*$" buffer))]
+        (let [buffer-match-suffix (first (re-find #":?([a-zA-Z0-9-.<>*=&?]*|^\(/)$" buffer))
+              completions         (sort (filter (partial is-completion? buffer-match-suffix)
+                                                (completion-candidates top-form? typed-ns)))
+              common-prefix (longest-common-prefix completions)]
+          (with-meta
+            (if (or (empty? common-prefix)
+                    (= common-prefix buffer-match-suffix))
+              (into [buffer-match-suffix] completions)
+              [buffer-match-suffix common-prefix])
+            {:ready true}))))))
