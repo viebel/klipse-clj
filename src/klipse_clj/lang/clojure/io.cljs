@@ -3,7 +3,7 @@
                    [purnam.core :refer [? !>]]
                    [cljs.core.async.macros :refer [go go-loop]])
   (:require
-   [cljs.reader :refer [read-string]]
+   [cljs.js :as cljs]
    [clojure.string :as s]
    [klipse-clj.repl :refer [def-a-var]]
    [clojure.walk :as ww]
@@ -137,6 +137,16 @@
           (src-cb {:lang :js :cache (edn (:body cache)) :source (:body src)}))
         (src-cb nil)))))
 
+
+(defn load-ns-from-file [st ns-sym filename]
+  (when *verbose?* (js/console.info "load-ns-from-file" filename))
+  (go
+    (let [{:keys [body status]} (<! (http/get filename {:with-credentials? false}))]
+      (if (= 200 status)
+        (let [data (edn body)]
+          (cljs/load-analysis-cache! st ns-sym data))
+        (println "load-ns-from-file: cannot fetch" filename)))))
+
 (defn cached-macro-ns-regexp []
   (:clojure_cached_macro_ns_regexp *klipse-settings* #"klipse-clj\..*|klipse-clj\.repl|cljs\.reader|cljs\.core\.[async|match].*|clojure\.math\.macros|gadjett\.core|cljs\.test|clojure.test.check.*|reagent\..*|om\..*|cljs\.spec.*|cljs-time\..*|re-frame\..*|net\.cgrand\.macrovich|reagent-forms\..*|ajax\.macros|poppea|expound\..*"))
 
@@ -177,9 +187,10 @@
                 (try-to-load-ns filenames :clj :source src-cb))))))
 
 
-(def cache-url "https://storage.googleapis.com/app.klipse.tech/fig/js/")
-;(def cache-url "/fig/js/")
-
+(defn bundled-ns-root []
+  (:bundled_ns_root *klipse-settings*
+                    "https://viebel.github.io/klipse-clj/target/public/cljs-out/dev/"
+                    #_"cljs-out/dev/" ))
 
 (defmethod load-ns :gist [external-libs {:keys [path]} src-cb]
   (let [path (string/replace path #"gist_" "")
@@ -253,7 +264,7 @@
                           (when *verbose?* (js/console.info "load-ns :cljs skipping" (str name)))
                           (src-cb {:lang :js :source ""}))
     (bundled-ns? name) (let [_ (when *verbose?* (js/console.log "load-ns :cljs bundled" name))
-                             filenames (map #(str cache-url path % ".cache.json") cljs-suffixes)]
+                             filenames (map #(str (bundled-ns-root) path % ".cache.json") cljs-suffixes)]
                          (go
                            (when-not (<! (try-to-load-ns filenames :js :cache src-cb :transform edn :can-recover? true))
                              ; sometimes it's a javascript namespace that is cached e.g com.cognitect.transit from transit-js
@@ -311,4 +322,5 @@
     :else (let [closure-github-path "https://raw.githubusercontent.com/google/closure-library/v20160713/closure/"
                 filenames (map #(str closure-github-path % ".js") ((juxt fix-goog-path identity another-goog-path simple-goog-path) path))]
             (try-to-load-ns filenames :js :source src-cb))))
+
 
