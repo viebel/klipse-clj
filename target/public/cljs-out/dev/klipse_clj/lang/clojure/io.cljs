@@ -189,7 +189,7 @@
 
 (defn bundled-ns-root []
   (:bundled_ns_root *klipse-settings*
-                    "https://viebel.github.io/klipse-clj/target/public/cljs-out/dev/parinfer"
+                    "https://viebel.github.io/klipse-clj/target/public/cljs-out/dev/"
                     #_"cljs-out/dev/" ))
 
 (defmethod load-ns :gist [external-libs {:keys [path]} src-cb]

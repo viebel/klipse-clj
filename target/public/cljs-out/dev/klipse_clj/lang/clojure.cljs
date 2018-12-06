@@ -27,7 +27,7 @@
 
 
 (defn load-core-macros-cache []
-  (io/load-ns-from-file @st 'cljs.core$macros "cljs-out/dev/cljs/core$macros.cljc.cache.json"))
+  (io/load-ns-from-file @st 'cljs.core$macros (str (io/bundled-ns-root) "/cljs/core$macros.cljc.cache.json")))
 
 (defn init-custom-macros []
   (go

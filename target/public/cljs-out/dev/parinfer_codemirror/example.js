@@ -23,8 +23,8 @@ parinfer_codemirror.example.editor_opts = new cljs.core.PersistentArrayMap(null,
  * Create a non-parinfer editor.
  */
 parinfer_codemirror.example.create_regular_editor_BANG_ = (function parinfer_codemirror$example$create_regular_editor_BANG_(var_args){
-var G__39340 = arguments.length;
-switch (G__39340) {
+var G__58983 = arguments.length;
+switch (G__58983) {
 case 1:
 return parinfer_codemirror.example.create_regular_editor_BANG_.cljs$core$IFn$_invoke$arity$1((arguments[(0)]));
 
@@ -62,8 +62,8 @@ parinfer_codemirror.example.create_regular_editor_BANG_.cljs$lang$maxFixedArity 
  * Create a parinfer editor.
  */
 parinfer_codemirror.example.create_editor_BANG_ = (function parinfer_codemirror$example$create_editor_BANG_(var_args){
-var G__39343 = arguments.length;
-switch (G__39343) {
+var G__58992 = arguments.length;
+switch (G__58992) {
 case 2:
 return parinfer_codemirror.example.create_editor_BANG_.cljs$core$IFn$_invoke$arity$2((arguments[(0)]),(arguments[(1)]));
 
