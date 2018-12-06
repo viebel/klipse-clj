@@ -25,7 +25,7 @@
   (reset! current-ns-compile 'cljs.user))
 
 
-(def st (atom nil))
+(defonce st (atom nil))
 
 (defn reset-state-eval! []
   (reset! st nil))
@@ -39,6 +39,10 @@
 
 (defn reset-state-compile! []
   (reset! st-compile nil))
+
+(defn- add-macros-suffix
+  [sym]
+  (symbol (str (name sym) "$macros")))
 
 (defn eval-form
   ([form]
@@ -262,3 +266,199 @@
                                                                   (symbol (str (:ns var)) (str fname))))
                                              :arglists (seq sigs)}]))
                               (into {})))))))))
+
+
+(defn- completion-candidates-for-ns
+  [ns-sym allow-private?]
+  (if (string/starts-with? (str ns-sym) "goog")
+    (if (find-ns ns-sym)
+      (into [] (js-keys (.getObjectByName js/goog (str ns-sym))))
+      [])
+    (map (comp str key)
+      (into []
+        (comp
+          (filter (if allow-private?
+                    identity
+                    #(not (:private (val %)))))
+          (remove #(:anonymous (val %))))
+        (apply merge
+          ((juxt :defs :macros)
+           (get-namespace ns-sym)))))))
+
+(defn- completion-candidates-for-current-ns []
+  (let [cur-ns @current-ns-eval]
+    (into (completion-candidates-for-ns cur-ns true)
+      (comp (mapcat keys) (map str))
+      ((juxt :renames :rename-macros :uses :use-macros) (get-namespace cur-ns)))))
+
+(defn- is-completion?
+  [match-suffix candidate]
+  (let [escaped-suffix (string/replace match-suffix #"[-\/\\^$*+?.()|\[\]{}]" "\\$&")]
+    (re-find (js/RegExp. (str "^" escaped-suffix) "i") candidate)))
+
+(def ^:private keyword-completions
+  [:require :require-macros :import
+   :refer :refer-macros :include-macros
+   :refer-clojure :exclude
+   :keys :strs :syms
+   :as :or
+   :pre :post
+   :let :when :while
+   :clj :cljs
+   :default
+   :else
+   :gen-class
+   :keywordize-keys
+   :req :req-un :opt :opt-un
+   :args :ret :fn])
+
+(def ^:private namespace-completion-exclusions
+  '[planck.from.io.aviso.ansi
+    planck.pprint.code
+    planck.pprint.data
+    planck.bundle
+    planck.closure
+    planck.js-deps
+    planck.repl
+    planck.repl-resources
+    planck.themes
+    clojure.core.rrb-vector
+    clojure.core.rrb-vector.interop
+    clojure.core.rrb-vector.nodes
+    clojure.core.rrb-vector.protocols
+    clojure.core.rrb-vector.rrbt
+    clojure.core.rrb-vector.transients
+    clojure.core.rrb-vector.trees
+    cognitect.transit
+    fipp.deque
+    fipp.engine
+    fipp.visit
+    lazy-map.core
+    cljs.source-map
+    cljs.source-map.base64
+    cljs.source-map.base64-vlq
+    cljs.tools.reader.impl.commons
+    cljs.tools.reader.impl.utils
+    cljs.stacktrace])
+
+(def ^:private namespace-completion-additons
+  '[clojure.core
+    clojure.test
+    clojure.spec.alpha
+    clojure.spec.test.alpha
+    clojure.spec.gen.alpha
+    clojure.pprint])
+
+(defn- all-ns
+  "Returns a sequence of all namespaces."
+  []
+  (keys (::ana/namespaces @@st)))
+
+(defn- current-alias-map
+  ([] (current-alias-map @current-ns-eval))
+  ([ns]
+   (->> (merge (get-in @@st [::ana/namespaces ns :requires])
+               (get-in @@st [::ana/namespaces ns :require-macros]))
+        (remove (fn [[k v]] (= k v)))
+        (into {}))))
+
+(defn- namespace-completions
+  []
+  (->> (all-ns)
+    (map #(drop-macros-suffix (str %)))
+    (remove (into #{} (map str namespace-completion-exclusions)))
+    (concat (map str namespace-completion-additons))
+    sort
+    distinct))
+
+(defn- expand-typed-ns
+  "Expand the typed namespace symbol to a known namespace, consulting current
+  namespace aliases if necessary."
+  [alias]
+  (let [alias (if (symbol-identical? alias 'clojure.core)
+                'cljs.core
+                alias)]
+    (or (get-in st [:cljs.analyzer/namespaces alias :name])
+        (alias (current-alias-map))
+        alias)))
+
+
+(defn- completion-candidates
+  [top-form? typed-ns]
+  (set (if typed-ns
+         (let [expanded-ns (expand-typed-ns (symbol typed-ns))]
+           (concat
+             (completion-candidates-for-ns expanded-ns false)
+             (completion-candidates-for-ns (add-macros-suffix expanded-ns) false)))
+         (concat
+           (map str keyword-completions)
+           (namespace-completions)
+           (map #(str % "/") (keys (current-alias-map)))
+           (completion-candidates-for-ns 'cljs.core false)
+           (completion-candidates-for-ns 'cljs.core$macros false)
+           (completion-candidates-for-current-ns)
+           (when top-form?
+             (concat
+               (map str (keys special-doc-map))
+               (map str (keys repl-special-doc-map))))))))
+
+(defn- longest-common-prefix
+  [strings]
+  (let [minl (apply min (map count strings))]
+    (loop [l minl]
+      (if (> l 0)
+        (if (every? #{(subs (first strings) 0 l)}
+              (map #(subs % 0 l) (rest strings)))
+          (subs (first strings) 0 l)
+          (recur (dec l)))
+        ""))))
+
+(defn- spec-registered-keywords
+  [ns]
+  (eduction
+    (filter keyword?)
+    (filter #(= (str ns) (namespace %)))
+    (keys (s/registry))))
+
+(defn- local-keyword-str
+  [kw]
+  (str "::" (name kw)))
+
+(defn- local-keyword
+  "Returns foo for ::foo, otherwise nil"
+  [buffer]
+  (second (re-find #"::([a-zA-Z-]*)$" buffer)))
+
+(defn- local-keyword-completions
+  [kw-name]
+  (let [kw-source (str "::" kw-name)]
+    (clj->js (into [kw-source]
+               (sequence
+                 (comp
+                   (map local-keyword-str)
+                   (filter #(string/starts-with? % kw-source)))
+                 (spec-registered-keywords @current-ns-eval))))))
+
+(defn get-completions
+  "Returns an array of the buffer-match-suffix, along with completions for the
+  entered text. If one completion is returned the line should be completed to
+  match it (in which the completion may actually only be a longest prefix from
+  the list of candiates), otherwise the list of completions should be
+  displayed."
+  [buffer]
+  (if (nil? @st)
+    (with-meta [buffer] {:ready false})
+    (if-let [kw-name (local-keyword buffer)]
+      (local-keyword-completions kw-name)
+      (let [top-form? (re-find #"^\s*\(\s*[^()\s]*$" buffer)
+            typed-ns  (second (re-find #"\(*(\b[a-zA-Z0-9-.<>*=&?]+)/[a-zA-Z0-9-]*$" buffer))]
+        (let [buffer-match-suffix (first (re-find #":?([a-zA-Z0-9-.<>*=&?]*|^\(/)$" buffer))
+              completions         (sort (filter (partial is-completion? buffer-match-suffix)
+                                                (completion-candidates top-form? typed-ns)))
+              common-prefix (longest-common-prefix completions)]
+          (with-meta
+            (if (or (empty? common-prefix)
+                    (= common-prefix buffer-match-suffix))
+              (into [buffer-match-suffix] completions)
+              [buffer-match-suffix common-prefix])
+            {:ready true}))))))
