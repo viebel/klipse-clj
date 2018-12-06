@@ -9,7 +9,7 @@
     [cljs.tagged-literals :as tags]
     [goog.dom :as gdom]
     [clojure.string :refer [blank?]]
-    [klipse-clj.repl :refer [st create-state-compile current-ns-eval current-ns-compile reset-ns-eval! reset-ns-compile!]]
+    [klipse-clj.repl :refer [get-completions current-alias-map st create-state-compile current-ns-eval current-ns-compile reset-ns-eval! reset-ns-compile!]]
     [klipse-clj.lang.clojure.guard :refer [min-max-eval-duration my-emits watchdog]]
     [klipse-clj.lang.clojure.io :as io]
     [clojure.pprint :as pprint]
@@ -37,18 +37,11 @@
       (<! (core-eval-an-exp my-macros {:st @st :ns current-ns-eval})))))
 
 (defn create-state-eval []
-  (go
-    (when (nil? @st)
+  (if @st
+    (go @st)
+    (do
       (reset! st (cljs/empty-state))
-      (<! (init-custom-macros)))
-    @st))
-
-(defn- current-alias-map
-  [ns]
-  (->> (merge (get-in @@st [::ana/namespaces ns :requires])
-              (get-in @@st [::ana/namespaces ns :require-macros]))
-       (remove (fn [[k v]] (= k v)))
-       (into {})))
+      (init-custom-macros))))
 
 (defn display [value {:keys [print-length beautify-strings]}]
   (with-redefs [*print-length* print-length]
@@ -204,6 +197,9 @@
   (when (and container (not result-element))
     (gdom/setTextContent container (str (:error res))))
   res)
+
+
+(def completions get-completions)
 
 (defn core-eval [s opts]
   (go
