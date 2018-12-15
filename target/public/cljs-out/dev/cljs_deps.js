@@ -11,8 +11,6 @@ goog.addDependency("../devtools/defaults.js", ['devtools.defaults'], ['cljs.core
 goog.addDependency("../devtools/prefs.js", ['devtools.prefs'], ['cljs.core', 'devtools.defaults']);
 goog.addDependency("../devtools/util.js", ['devtools.util'], ['cljs.core', 'devtools.version', 'goog.userAgent', 'cljs.pprint', 'devtools.context', 'clojure.data', 'devtools.prefs']);
 goog.addDependency("../process/env.js", ['process.env'], ['cljs.core']);
-goog.addDependency("../figwheel/tools/heads_up.js", ['figwheel.tools.heads_up'], ['goog.dom', 'goog.string', 'cljs.core', 'goog.dom.dataset', 'goog.object', 'cljs.pprint', 'goog.Promise', 'clojure.string']);
-goog.addDependency("../figwheel/core.js", ['figwheel.core'], ['goog.string', 'goog.debug.Console', 'cljs.core', 'goog.object', 'goog.events.EventTarget', 'figwheel.tools.heads_up', 'goog.log', 'clojure.set', 'goog.Promise', 'goog.string.format', 'goog.async.Deferred', 'goog.events.Event', 'clojure.string']);
 goog.addDependency("../figwheel/repl.js", ['figwheel.repl'], ['goog.userAgent.product', 'goog.net.XhrIo', 'goog.json', 'goog.string', 'goog.debug.Console', 'goog.storage.mechanism.HTML5SessionStorage', 'goog.Uri.QueryData', 'goog.net.jsloader', 'goog.Uri', 'cljs.core', 'goog.object', 'goog.log', 'goog.html.legacyconversions', 'goog.Promise', 'goog.storage.mechanism.mechanismfactory', 'goog.net.WebSocket', 'clojure.string', 'goog.array']);
 goog.addDependency("../devtools/protocols.js", ['devtools.protocols'], ['cljs.core']);
 goog.addDependency("../devtools/format.js", ['devtools.format'], ['cljs.core', 'devtools.context']);
@@ -50,7 +48,7 @@ goog.addDependency("../cljs/source_map/base64.js", ['cljs.source_map.base64'], [
 goog.addDependency("../cljs/source_map/base64_vlq.js", ['cljs.source_map.base64_vlq'], ['cljs.source_map.base64', 'cljs.core', 'goog.string.StringBuffer', 'clojure.string']);
 goog.addDependency("../cljs/source_map.js", ['cljs.source_map'], ['cljs.source_map.base64_vlq', 'cljs.core', 'goog.object', 'clojure.set', 'clojure.string']);
 goog.addDependency("../cljs/compiler.js", ['cljs.compiler'], ['cljs.tools.reader', 'goog.string', 'cljs.core', 'cljs.env', 'goog.string.StringBuffer', 'clojure.set', 'cljs.analyzer', 'cljs.source_map', 'clojure.string']);
-goog.addDependency("../cljs/spec/gen/alpha.js", ['cljs.spec.gen.alpha'], ['cljs.core']);
+goog.addDependency("../cljs/spec/gen/alpha.js", ['cljs.spec.gen.alpha'], ['goog.Uri', 'cljs.core']);
 goog.addDependency("../cljs/spec/alpha.js", ['cljs.spec.alpha'], ['cljs.core', 'goog.object', 'clojure.string', 'clojure.walk', 'cljs.spec.gen.alpha']);
 goog.addDependency("../cljs/core$macros.js", ['cljs.core$macros'], ['cljs.compiler', 'cljs.core', 'cljs.env', 'clojure.set', 'cljs.analyzer', 'clojure.string', 'clojure.walk']);
 goog.addDependency("../cljs/js.js", ['cljs.js'], ['cljs.compiler', 'cljs.tools.reader', 'cljs.core', 'goog.crypt.base64', 'cljs.tools.reader.reader_types', 'cljs.env', 'goog.string.StringBuffer', 'cljs.tagged_literals', 'cljs.analyzer', 'cljs.source_map', 'clojure.string', 'cljs.spec.alpha', 'clojure.walk', 'cljs.core$macros']);
@@ -76,10 +74,11 @@ goog.addDependency("../com/cognitect/transit/impl/decoder.js", ['com.cognitect.t
 goog.addDependency("../com/cognitect/transit/impl/reader.js", ['com.cognitect.transit.impl.reader'], ['com.cognitect.transit.impl.decoder', 'com.cognitect.transit.caching']);
 goog.addDependency("../parinfer_codemirror/state.js", ['parinfer_codemirror.state'], ['cljs.core']);
 goog.addDependency("../cljs/analyzer/api.js", ['cljs.analyzer.api'], ['cljs.core', 'cljs.env', 'cljs.analyzer']);
+goog.addDependency("../cljs/core/specs/alpha.js", ['cljs.core.specs.alpha'], ['cljs.core']);
 goog.addDependency("../klipse_clj/repl_resources.js", ['klipse_clj.repl_resources'], ['cljs.core']);
 goog.addDependency("../klipse_clj/repl.js", ['klipse_clj.repl'], ['cljs.js', 'cljs.core', 'klipse_clj.repl_resources', 'cljs.analyzer', 'clojure.string', 'cljs.spec.alpha']);
-goog.addDependency("../cljs/repl.js", ['cljs.repl'], ['cljs.core', 'cljs.spec.alpha']);
-goog.addDependency("../klipse_clj/lang/clojure/bundled_namespaces.js", ['klipse_clj.lang.clojure.bundled_namespaces'], ['clojure.zip', 'cljs.core', 'cljs.analyzer.api', 'cljs.env', 'klipse_clj.repl', 'clojure.set', 'cljs.analyzer', 'cljs.repl', 'cljs.spec.alpha', 'clojure.data', 'clojure.walk', 'klipse_clj.tools']);
+goog.addDependency("../cljs/repl.js", ['cljs.repl'], ['goog.string', 'cljs.core', 'goog.string.format', 'cljs.spec.alpha']);
+goog.addDependency("../klipse_clj/lang/clojure/bundled_namespaces.js", ['klipse_clj.lang.clojure.bundled_namespaces'], ['clojure.zip', 'cljs.core', 'cljs.analyzer.api', 'cljs.env', 'cljs.core.specs.alpha', 'klipse_clj.repl', 'clojure.set', 'cljs.analyzer', 'cljs.repl', 'cljs.spec.alpha', 'clojure.data', 'clojure.walk', 'klipse_clj.tools']);
 goog.addDependency("../com/cognitect/transit/handlers.js", ['com.cognitect.transit.handlers'], ['com.cognitect.transit.util', 'com.cognitect.transit.types', 'goog.math.Long']);
 goog.addDependency("../com/cognitect/transit/impl/writer.js", ['com.cognitect.transit.impl.writer'], ['com.cognitect.transit.util', 'com.cognitect.transit.caching', 'com.cognitect.transit.handlers', 'com.cognitect.transit.types', 'com.cognitect.transit.delimiters', 'goog.math.Long']);
 goog.addDependency("../com/cognitect/transit.js", ['com.cognitect.transit'], ['com.cognitect.transit.util', 'com.cognitect.transit.impl.reader', 'com.cognitect.transit.impl.writer', 'com.cognitect.transit.types', 'com.cognitect.transit.eq', 'com.cognitect.transit.impl.decoder', 'com.cognitect.transit.caching']);
@@ -96,4 +95,4 @@ goog.addDependency("../cljs_http/core.js", ['cljs_http.core'], ['goog.net.Jsonp'
 goog.addDependency("../cljs_http/client.js", ['cljs_http.client'], ['cljs_http.core', 'no.en.core', 'goog.Uri', 'cljs.core', 'cljs_http.util', 'cljs.core.async', 'clojure.string', 'cljs.reader']);
 goog.addDependency("../klipse_clj/lang/clojure/io.js", ['klipse_clj.lang.clojure.io'], ['cljs.js', 'cljs.core', 'cljs_http.client', 'cljs_http.util', 'cljs.core.async', 'klipse_clj.repl', 'clojure.string', 'clojure.walk']);
 goog.addDependency("../klipse_clj/lang/clojure/guard.js", ['klipse_clj.lang.clojure.guard'], ['cljs.compiler', 'cljs.core', 'cljs.core.async', 'cljs.analyzer', 'clojure.string']);
-goog.addDependency("../klipse_clj/lang/clojure.js", ['klipse_clj.lang.clojure'], ['klipse_clj.lang.clojure.io', 'cljs.compiler', 'goog.dom', 'klipse_clj.lang.clojure.guard', 'klipse_clj.lang.clojure.bundled_namespaces', 'cljs.tools.reader', 'cljs.js', 'cljs.core', 'cljs.tools.reader.reader_types', 'cljs.env', 'cljs.core.async', 'klipse_clj.repl', 'cljs.pprint', 'cljs.tagged_literals', 'cljs.analyzer', 'gadjett.core_fn', 'clojure.string']);
+goog.addDependency("../klipse_clj/lang/clojure.js", ['klipse_clj.lang.clojure'], ['klipse_clj.lang.clojure.io', 'cljs.compiler', 'goog.dom', 'klipse_clj.lang.clojure.guard', 'klipse_clj.lang.clojure.bundled_namespaces', 'cljs.tools.reader', 'cljs.js', 'cljs.core', 'cljs.tools.reader.reader_types', 'cljs.env', 'cljs.core.async', 'klipse_clj.repl', 'cljs.pprint', 'cljs.tagged_literals', 'cljs.analyzer', 'cljs.repl', 'gadjett.core_fn', 'clojure.string']);

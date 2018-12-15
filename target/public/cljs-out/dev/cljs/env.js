@@ -1,10 +1,13 @@
-// Compiled by ClojureScript 1.10.238 {}
+// Compiled by ClojureScript 0.0.668480191 {}
 goog.provide('cljs.env');
 goog.require('cljs.core');
 cljs.env._STAR_compiler_STAR_ = null;
+cljs.env.default_compiler_env_STAR_ = (function cljs$env$default_compiler_env_STAR_(options){
+return cljs.core.merge.call(null,new cljs.core.PersistentArrayMap(null, 5, [new cljs.core.Keyword("cljs.analyzer","namespaces","cljs.analyzer/namespaces",-260788927),new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Symbol(null,"cljs.user","cljs.user",877795071,null),new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null,"name","name",1843675177),new cljs.core.Symbol(null,"cljs.user","cljs.user",877795071,null)], null)], null),new cljs.core.Keyword("cljs.analyzer","constant-table","cljs.analyzer/constant-table",-114131889),cljs.core.PersistentArrayMap.EMPTY,new cljs.core.Keyword("cljs.analyzer","data-readers","cljs.analyzer/data-readers",1778544933),cljs.core.PersistentArrayMap.EMPTY,new cljs.core.Keyword("cljs.analyzer","externs","cljs.analyzer/externs",893359239),null,new cljs.core.Keyword(null,"options","options",99638489),options], null));
+});
 cljs.env.default_compiler_env = (function cljs$env$default_compiler_env(var_args){
-var G__9451 = arguments.length;
-switch (G__9451) {
+var G__24027 = arguments.length;
+switch (G__24027) {
 case 0:
 return cljs.env.default_compiler_env.cljs$core$IFn$_invoke$arity$0();
 
@@ -24,7 +27,7 @@ return cljs.env.default_compiler_env.call(null,cljs.core.PersistentArrayMap.EMPT
 });
 
 cljs.env.default_compiler_env.cljs$core$IFn$_invoke$arity$1 = (function (options){
-return cljs.core.atom.call(null,cljs.core.merge.call(null,new cljs.core.PersistentArrayMap(null, 5, [new cljs.core.Keyword("cljs.analyzer","namespaces","cljs.analyzer/namespaces",-260788927),new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Symbol(null,"cljs.user","cljs.user",877795071,null),new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null,"name","name",1843675177),new cljs.core.Symbol(null,"cljs.user","cljs.user",877795071,null)], null)], null),new cljs.core.Keyword("cljs.analyzer","constant-table","cljs.analyzer/constant-table",-114131889),cljs.core.PersistentArrayMap.EMPTY,new cljs.core.Keyword("cljs.analyzer","data-readers","cljs.analyzer/data-readers",1778544933),cljs.core.PersistentArrayMap.EMPTY,new cljs.core.Keyword("cljs.analyzer","externs","cljs.analyzer/externs",893359239),null,new cljs.core.Keyword(null,"options","options",99638489),options], null)));
+return cljs.core.atom.call(null,cljs.env.default_compiler_env_STAR_.call(null,options));
 });
 
 cljs.env.default_compiler_env.cljs$lang$maxFixedArity = 1;

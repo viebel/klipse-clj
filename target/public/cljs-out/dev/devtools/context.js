@@ -1,4 +1,4 @@
-// Compiled by ClojureScript 1.10.238 {}
+// Compiled by ClojureScript 0.0.668480191 {}
 goog.provide('devtools.context');
 goog.require('cljs.core');
 devtools.context.get_root = (function devtools$context$get_root(){

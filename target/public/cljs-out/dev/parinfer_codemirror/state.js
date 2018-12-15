@@ -1,7 +1,7 @@
-// Compiled by ClojureScript 1.10.238 {}
+// Compiled by ClojureScript 0.0.668480191 {}
 goog.provide('parinfer_codemirror.state');
 goog.require('cljs.core');
-if(typeof parinfer_codemirror.state.state !== 'undefined'){
+if((typeof parinfer_codemirror !== 'undefined') && (typeof parinfer_codemirror.state !== 'undefined') && (typeof parinfer_codemirror.state.state !== 'undefined')){
 } else {
 parinfer_codemirror.state.state = cljs.core.atom.call(null,cljs.core.PersistentArrayMap.EMPTY);
 }

@@ -8,10 +8,11 @@
 
 (ns cljs.spec.gen.alpha
   (:refer-clojure :exclude [boolean cat hash-map list map not-empty set vector
-                            char double int keyword symbol string uuid delay])
+                            char double int keyword symbol string uuid delay shuffle])
   (:require-macros [cljs.core :as c]
                    [cljs.spec.gen.alpha :as gen :refer [dynaload lazy-combinators lazy-prims]])
-  (:require [cljs.core :as c]))
+  (:require [cljs.core :as c])
+  (:import (goog Uri)))
 
 (deftype LazyVar [f ^:mutable cached]
   IDeref
@@ -68,7 +69,7 @@
 
 (lazy-combinators hash-map list map not-empty set vector vector-distinct fmap elements
   bind choose one-of such-that tuple sample return
-  large-integer* double* frequency)
+  large-integer* double* frequency shuffle)
 
 (lazy-prims any any-printable boolean char char-alpha char-alphanumeric char-ascii double
   int keyword keyword-ns large-integer ratio simple-type simple-type-printable
@@ -88,6 +89,7 @@ gen-builtins
   (c/delay
     (let [simple (simple-type-printable)]
       {any? (one-of [(return nil) (any-printable)])
+       some? (such-that some? (any-printable))
        number? (one-of [(large-integer) (double)])
        integer? (large-integer)
        int? (large-integer)
@@ -107,6 +109,7 @@ gen-builtins
        simple-symbol? (symbol)
        qualified-symbol? (such-that qualified? (symbol-ns))
        uuid? (uuid)
+       uri? (fmap #(Uri. (str "http://" % ".com")) (uuid))
        inst? (fmap #(js/Date. %)
                     (large-integer))
        seqable? (one-of [(return nil)
@@ -158,7 +161,7 @@ gen-builtins
               :b (gen-for-pred keyword?)}
         opts {:c (gen-for-pred string?)}]
     (generate (bind (choose 0 (count opts))
-                #(let [args (concat (seq reqs) (shuffle (seq opts)))]
+                #(let [args (concat (seq reqs) (c/shuffle (seq opts)))]
                   (->> args
                     (take (+ % (count reqs)))
                     (mapcat identity)

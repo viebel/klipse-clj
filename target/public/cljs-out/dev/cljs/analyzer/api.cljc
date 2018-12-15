@@ -71,7 +71,8 @@
      (one of :statement, :expr, :return), :ns (a symbol naming the
      compilation ns)}, and form, returns an expression object (a map
      containing at least :form, :op and :env keys). If expr has any (immediately)
-     nested exprs, must have :children [exprs...] entry. This will
+     nested exprs, must have :children entry. This must be a vector of keywords naming
+     the immediately nested fields mapped to an expr or vector of exprs. This will
      facilitate code walking without knowing the details of the op set."
      ([env form] (analyze env form nil))
      ([env form name] (analyze env form name nil))
@@ -147,8 +148,9 @@
   [env sym]
   {:pre [(map? env) (symbol? sym)]}
   (try
-    (ana/resolve-var env sym
-      (ana/confirm-var-exists-throw))
+    (binding [ana/*private-var-access-nowarn* true]
+      (ana/resolve-var env sym
+        (ana/confirm-var-exists-throw)))
     (catch #?(:clj Exception :cljs :default) e
       (ana/resolve-macro-var env sym))))
 

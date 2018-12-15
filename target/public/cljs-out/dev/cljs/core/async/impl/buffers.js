@@ -1,4 +1,4 @@
-// Compiled by ClojureScript 1.10.238 {}
+// Compiled by ClojureScript 0.0.668480191 {}
 goog.provide('cljs.core.async.impl.buffers');
 goog.require('cljs.core');
 goog.require('cljs.core.async.impl.protocols');
@@ -8,8 +8,8 @@ while(true){
 if((cnt < len)){
 (dest[(dest_start + cnt)] = (src[(src_start + cnt)]));
 
-var G__15224 = (cnt + (1));
-cnt = G__15224;
+var G__29613 = (cnt + (1));
+cnt = G__29613;
 continue;
 } else {
 return null;
@@ -109,18 +109,18 @@ return null;
 cljs.core.async.impl.buffers.RingBuffer.prototype.cleanup = (function (keep_QMARK_){
 var self__ = this;
 var this$ = this;
-var n__4376__auto__ = self__.length;
+var n__18893__auto__ = self__.length;
 var x = (0);
 while(true){
-if((x < n__4376__auto__)){
-var v_15225 = this$.pop();
-if(keep_QMARK_.call(null,v_15225)){
-this$.unshift(v_15225);
+if((x < n__18893__auto__)){
+var v_29614 = this$.pop();
+if(keep_QMARK_.call(null,v_29614)){
+this$.unshift(v_29614);
 } else {
 }
 
-var G__15226 = (x + (1));
-x = G__15226;
+var G__29615 = (x + (1));
+x = G__29615;
 continue;
 } else {
 return null;
@@ -137,8 +137,8 @@ cljs.core.async.impl.buffers.RingBuffer.cljs$lang$type = true;
 
 cljs.core.async.impl.buffers.RingBuffer.cljs$lang$ctorStr = "cljs.core.async.impl.buffers/RingBuffer";
 
-cljs.core.async.impl.buffers.RingBuffer.cljs$lang$ctorPrWriter = (function (this__4161__auto__,writer__4162__auto__,opt__4163__auto__){
-return cljs.core._write.call(null,writer__4162__auto__,"cljs.core.async.impl.buffers/RingBuffer");
+cljs.core.async.impl.buffers.RingBuffer.cljs$lang$ctorPrWriter = (function (this__18502__auto__,writer__18503__auto__,opt__18504__auto__){
+return cljs.core._write.call(null,writer__18503__auto__,"cljs.core.async.impl.buffers/RingBuffer");
 });
 
 /**
@@ -210,8 +210,8 @@ cljs.core.async.impl.buffers.FixedBuffer.cljs$lang$type = true;
 
 cljs.core.async.impl.buffers.FixedBuffer.cljs$lang$ctorStr = "cljs.core.async.impl.buffers/FixedBuffer";
 
-cljs.core.async.impl.buffers.FixedBuffer.cljs$lang$ctorPrWriter = (function (this__4161__auto__,writer__4162__auto__,opt__4163__auto__){
-return cljs.core._write.call(null,writer__4162__auto__,"cljs.core.async.impl.buffers/FixedBuffer");
+cljs.core.async.impl.buffers.FixedBuffer.cljs$lang$ctorPrWriter = (function (this__18502__auto__,writer__18503__auto__,opt__18504__auto__){
+return cljs.core._write.call(null,writer__18503__auto__,"cljs.core.async.impl.buffers/FixedBuffer");
 });
 
 /**
@@ -284,8 +284,8 @@ cljs.core.async.impl.buffers.DroppingBuffer.cljs$lang$type = true;
 
 cljs.core.async.impl.buffers.DroppingBuffer.cljs$lang$ctorStr = "cljs.core.async.impl.buffers/DroppingBuffer";
 
-cljs.core.async.impl.buffers.DroppingBuffer.cljs$lang$ctorPrWriter = (function (this__4161__auto__,writer__4162__auto__,opt__4163__auto__){
-return cljs.core._write.call(null,writer__4162__auto__,"cljs.core.async.impl.buffers/DroppingBuffer");
+cljs.core.async.impl.buffers.DroppingBuffer.cljs$lang$ctorPrWriter = (function (this__18502__auto__,writer__18503__auto__,opt__18504__auto__){
+return cljs.core._write.call(null,writer__18503__auto__,"cljs.core.async.impl.buffers/DroppingBuffer");
 });
 
 /**
@@ -360,8 +360,8 @@ cljs.core.async.impl.buffers.SlidingBuffer.cljs$lang$type = true;
 
 cljs.core.async.impl.buffers.SlidingBuffer.cljs$lang$ctorStr = "cljs.core.async.impl.buffers/SlidingBuffer";
 
-cljs.core.async.impl.buffers.SlidingBuffer.cljs$lang$ctorPrWriter = (function (this__4161__auto__,writer__4162__auto__,opt__4163__auto__){
-return cljs.core._write.call(null,writer__4162__auto__,"cljs.core.async.impl.buffers/SlidingBuffer");
+cljs.core.async.impl.buffers.SlidingBuffer.cljs$lang$ctorPrWriter = (function (this__18502__auto__,writer__18503__auto__,opt__18504__auto__){
+return cljs.core._write.call(null,writer__18503__auto__,"cljs.core.async.impl.buffers/SlidingBuffer");
 });
 
 /**
@@ -374,7 +374,7 @@ return (new cljs.core.async.impl.buffers.SlidingBuffer(buf,n));
 cljs.core.async.impl.buffers.sliding_buffer = (function cljs$core$async$impl$buffers$sliding_buffer(n){
 return (new cljs.core.async.impl.buffers.SlidingBuffer(cljs.core.async.impl.buffers.ring_buffer.call(null,n),n));
 });
-if(typeof cljs.core.async.impl.buffers.NO_VAL !== 'undefined'){
+if((typeof cljs !== 'undefined') && (typeof cljs.core !== 'undefined') && (typeof cljs.core.async !== 'undefined') && (typeof cljs.core.async.impl !== 'undefined') && (typeof cljs.core.async.impl.buffers !== 'undefined') && (typeof cljs.core.async.impl.buffers.NO_VAL !== 'undefined')){
 } else {
 cljs.core.async.impl.buffers.NO_VAL = (new Object());
 }
@@ -412,7 +412,7 @@ return self__.val;
 cljs.core.async.impl.buffers.PromiseBuffer.prototype.cljs$core$async$impl$protocols$Buffer$add_BANG__STAR_$arity$2 = (function (this$,itm){
 var self__ = this;
 var this$__$1 = this;
-if(cljs.core.truth_(cljs.core.async.impl.buffers.undelivered_QMARK_.call(null,self__.val))){
+if(cljs.core.async.impl.buffers.undelivered_QMARK_.call(null,self__.val)){
 self__.val = itm;
 } else {
 }
@@ -423,7 +423,7 @@ return this$__$1;
 cljs.core.async.impl.buffers.PromiseBuffer.prototype.cljs$core$async$impl$protocols$Buffer$close_buf_BANG_$arity$1 = (function (_){
 var self__ = this;
 var ___$1 = this;
-if(cljs.core.truth_(cljs.core.async.impl.buffers.undelivered_QMARK_.call(null,self__.val))){
+if(cljs.core.async.impl.buffers.undelivered_QMARK_.call(null,self__.val)){
 return self__.val = null;
 } else {
 return null;
@@ -433,7 +433,7 @@ return null;
 cljs.core.async.impl.buffers.PromiseBuffer.prototype.cljs$core$ICounted$_count$arity$1 = (function (_){
 var self__ = this;
 var ___$1 = this;
-if(cljs.core.truth_(cljs.core.async.impl.buffers.undelivered_QMARK_.call(null,self__.val))){
+if(cljs.core.async.impl.buffers.undelivered_QMARK_.call(null,self__.val)){
 return (0);
 } else {
 return (1);
@@ -448,8 +448,8 @@ cljs.core.async.impl.buffers.PromiseBuffer.cljs$lang$type = true;
 
 cljs.core.async.impl.buffers.PromiseBuffer.cljs$lang$ctorStr = "cljs.core.async.impl.buffers/PromiseBuffer";
 
-cljs.core.async.impl.buffers.PromiseBuffer.cljs$lang$ctorPrWriter = (function (this__4161__auto__,writer__4162__auto__,opt__4163__auto__){
-return cljs.core._write.call(null,writer__4162__auto__,"cljs.core.async.impl.buffers/PromiseBuffer");
+cljs.core.async.impl.buffers.PromiseBuffer.cljs$lang$ctorPrWriter = (function (this__18502__auto__,writer__18503__auto__,opt__18504__auto__){
+return cljs.core._write.call(null,writer__18503__auto__,"cljs.core.async.impl.buffers/PromiseBuffer");
 });
 
 /**

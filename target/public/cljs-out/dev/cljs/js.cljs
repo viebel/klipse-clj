@@ -184,17 +184,17 @@
                                                     (.fromCharCode js/String (str "0x" match))))
                 (base64/encodeString))))))
 
-(defn- current-alias-map
-  []
-  (->> (merge (get-in @env/*compiler* [::ana/namespaces ana/*cljs-ns* :requires])
-         (get-in @env/*compiler* [::ana/namespaces ana/*cljs-ns* :require-macros]))
+(defn- alias-map
+  [compiler cljs-ns]
+  (->> (merge (get-in compiler [::ana/namespaces cljs-ns :requires])
+         (get-in compiler [::ana/namespaces cljs-ns :require-macros]))
     (remove (fn [[k v]] (symbol-identical? k v)))
     (into {})))
 
 ;; -----------------------------------------------------------------------------
 ;; Analyze
 
-(declare eval-str*)
+(declare ^{:arglists '([bound-vars source name opts cb])} eval-str*)
 
 (def *loaded* (atom #{}))
 
@@ -217,7 +217,10 @@
           (run-async! proc (rest coll) break? cb))))
     (cb nil)))
 
-(declare require)
+(declare ^{:arglists '([name cb]
+                       [name opts cb]
+                       [bound-vars name opts cb]
+                       [bound-vars name reload opts cb])} require)
 
 (defn- process-deps
   [bound-vars names opts cb]
@@ -426,7 +429,7 @@
                      (cb res))))))
            (cb {:value nil})))))))
 
-(declare analyze-str*)
+(declare ^{:arglists '([bound-vars source name opts cb])} analyze-str*)
 
 (defn- analyze-deps
   ([bound-vars ana-env lib deps cb]
@@ -654,9 +657,7 @@
       (let [{:keys [global-exports]} (get js-dependency-index (name dep))]
         (.append sb
           (with-out-str
-            (comp/emitln (munge ns-name) "."
-              (ana/munge-global-export dep)
-              " = goog.global." (get global-exports (symbol dep)) ";")))))
+            (comp/emit-global-export ns-name global-exports dep)))))
     (when (and (seq deps) emit-nil-result?)
       (.append sb "null;"))))
 
@@ -684,7 +685,7 @@
                  ana/*fn-invoke-direct* (and (:static-fns opts) (:fn-invoke-direct opts))
                  *ns*                   (create-ns ns)
                  ana/*passes*           (:*passes* bound-vars)
-                 r/*alias-map*          (current-alias-map)
+                 r/*alias-map*          (alias-map @(:*compiler* bound-vars) ns)
                  r/*data-readers*       (:*data-readers* bound-vars)
                  r/resolve-symbol       resolve-symbol
                  comp/*source-map-data* (:*sm-data* bound-vars)
@@ -786,7 +787,7 @@
 ;; -----------------------------------------------------------------------------
 ;; Eval
 
-(declare clear-fns!)
+(declare ^{:arglists '([])} clear-fns!)
 
 (defn- eval* [bound-vars form opts cb]
   (let [the-ns     (or (:ns opts) 'cljs.user)
@@ -800,7 +801,7 @@
               ana/*cljs-static-fns*  (:static-fns opts)
               ana/*fn-invoke-direct* (and (:static-fns opts) (:fn-invoke-direct opts))
               *ns*                   (create-ns (:*cljs-ns* bound-vars))
-              r/*alias-map*          (current-alias-map)
+              r/*alias-map*          (alias-map @(:*compiler* bound-vars) (:*cljs-ns* bound-vars))
               r/*data-readers*       (:*data-readers* bound-vars)
               r/resolve-symbol       resolve-symbol
               comp/*source-map-data* (:*sm-data* bound-vars)]
@@ -915,7 +916,7 @@
                  ana/*cljs-static-fns*  (:static-fns opts)
                  ana/*fn-invoke-direct* (and (:static-fns opts) (:fn-invoke-direct opts))
                  *ns*                   (create-ns ns)
-                 r/*alias-map*          (current-alias-map)
+                 r/*alias-map*          (alias-map @(:*compiler* bound-vars) ns)
                  r/*data-readers*       (:*data-readers* bound-vars)
                  r/resolve-symbol       resolve-symbol
                  comp/*source-map-data* (:*sm-data* bound-vars)]
@@ -1050,7 +1051,7 @@
                  ana/*cljs-static-fns*  (:static-fns opts)
                  ana/*fn-invoke-direct* (and (:static-fns opts) (:fn-invoke-direct opts))
                  *ns*                   (create-ns ns)
-                 r/*alias-map*          (current-alias-map)
+                 r/*alias-map*          (alias-map @(:*compiler* bound-vars) ns)
                  r/*data-readers*       (:*data-readers* bound-vars)
                  r/resolve-symbol       resolve-symbol
                  comp/*source-map-data* (:*sm-data* bound-vars)
@@ -1226,11 +1227,11 @@
 (defn- emit-fn [f]
   (print "cljs.js.get_fn(" (put-fn f) ")"))
 
-(defmethod comp/emit-constant js/Function
+(defmethod comp/emit-constant* js/Function
   [f]
   (emit-fn f))
 
-(defmethod comp/emit-constant cljs.core/Var
+(defmethod comp/emit-constant* cljs.core/Var
   [f]
   (emit-fn f))
 

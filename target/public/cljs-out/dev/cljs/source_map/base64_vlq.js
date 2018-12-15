@@ -1,4 +1,4 @@
-// Compiled by ClojureScript 1.10.238 {}
+// Compiled by ClojureScript 0.0.668480191 {}
 goog.provide('cljs.source_map.base64_vlq');
 goog.require('cljs.core');
 goog.require('clojure.string');
@@ -27,25 +27,25 @@ return shifted;
 cljs.source_map.base64_vlq.encode_val = (function cljs$source_map$base64_vlq$encode_val(n){
 var sb = (new goog.string.StringBuffer());
 var vlq = cljs.source_map.base64_vlq.to_vlq_signed.call(null,n);
-var digit_11730 = (vlq & cljs.source_map.base64_vlq.vlq_base_mask);
-var vlq_11731__$1 = (vlq >>> (5));
+var digit_25246 = (vlq & cljs.source_map.base64_vlq.vlq_base_mask);
+var vlq_25247__$1 = (vlq >>> (5));
 while(true){
-if((vlq_11731__$1 > (0))){
-var digit_11732__$1 = (digit_11730 | cljs.source_map.base64_vlq.vlq_continuation_bit);
-sb.append(cljs.source_map.base64.encode.call(null,digit_11732__$1));
+if((vlq_25247__$1 > (0))){
+var digit_25248__$1 = (digit_25246 | cljs.source_map.base64_vlq.vlq_continuation_bit);
+sb.append(cljs.source_map.base64.encode.call(null,digit_25248__$1));
 
-var G__11733 = (vlq_11731__$1 & cljs.source_map.base64_vlq.vlq_base_mask);
-var G__11734 = (vlq_11731__$1 >>> (5));
-digit_11730 = G__11733;
-vlq_11731__$1 = G__11734;
+var G__25249 = (vlq_25247__$1 & cljs.source_map.base64_vlq.vlq_base_mask);
+var G__25250 = (vlq_25247__$1 >>> (5));
+digit_25246 = G__25249;
+vlq_25247__$1 = G__25250;
 continue;
 } else {
-sb.append(cljs.source_map.base64.encode.call(null,digit_11730));
+sb.append(cljs.source_map.base64.encode.call(null,digit_25246));
 }
 break;
 }
 
-return [cljs.core.str.cljs$core$IFn$_invoke$arity$1(sb)].join('');
+return cljs.core.str.cljs$core$IFn$_invoke$arity$1(sb);
 });
 cljs.source_map.base64_vlq.encode = (function cljs$source_map$base64_vlq$encode(v){
 return cljs.core.apply.call(null,cljs.core.str,cljs.core.map.call(null,cljs.source_map.base64_vlq.encode_val,v));
@@ -68,12 +68,12 @@ var digit__$1 = (digit & cljs.source_map.base64_vlq.vlq_base_mask);
 var result__$1 = (result + (digit__$1 << shift));
 var shift__$1 = (shift + (5));
 if(continuation_QMARK_){
-var G__11735 = i__$1;
-var G__11736 = result__$1;
-var G__11737 = shift__$1;
-i = G__11735;
-result = G__11736;
-shift = G__11737;
+var G__25251 = i__$1;
+var G__25252 = result__$1;
+var G__25253 = shift__$1;
+i = G__25251;
+result = G__25252;
+shift = G__25253;
 continue;
 } else {
 return (new cljs.core.LazySeq(null,((function (i,result,shift,i__$1,continuation_QMARK_,digit__$1,result__$1,shift__$1,digit,l){

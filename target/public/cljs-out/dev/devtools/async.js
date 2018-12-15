@@ -1,24 +1,24 @@
-// Compiled by ClojureScript 1.10.238 {}
+// Compiled by ClojureScript 0.0.668480191 {}
 goog.provide('devtools.async');
 goog.require('cljs.core');
 goog.require('goog.async.nextTick');
 goog.require('goog.labs.userAgent.browser');
 goog.require('devtools.context');
 devtools.async.available_QMARK_ = (function devtools$async$available_QMARK_(){
-return typeof Promise !== 'undefined';
+return (typeof Promise !== 'undefined');
 });
 devtools.async.fixed_chrome_version_for_async = "65.0.3321";
 devtools.async.needed_QMARK_ = (function devtools$async$needed_QMARK_(){
-return cljs.core.not.call(null,(function (){var and__3911__auto__ = goog.labs.userAgent.browser.isChrome();
-if(cljs.core.truth_(and__3911__auto__)){
+return cljs.core.not.call(null,(function (){var and__17810__auto__ = goog.labs.userAgent.browser.isChrome();
+if(cljs.core.truth_(and__17810__auto__)){
 return goog.labs.userAgent.browser.isVersionOrHigher(devtools.async.fixed_chrome_version_for_async);
 } else {
-return and__3911__auto__;
+return and__17810__auto__;
 }
 })());
 });
 devtools.async.get_not_needed_message = (function devtools$async$get_not_needed_message(){
-return ["cljs-devtools: the :async feature is no longer needed since Chrome ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(devtools.async.fixed_chrome_version_for_async),", ","see https://github.com/binaryage/cljs-devtools/issues/20"].join('');
+return ["cljs-devtools: the :async feature is no longer needed since Chrome ",devtools.async.fixed_chrome_version_for_async,", ","see https://github.com/binaryage/cljs-devtools/issues/20"].join('');
 });
 devtools.async._STAR_installed_STAR_ = false;
 devtools.async._STAR_original_set_immediate_STAR_ = null;
@@ -28,12 +28,12 @@ throw e;
 }),(0));
 });
 devtools.async.promise_based_set_immediate = (function devtools$async$promise_based_set_immediate(callback){
-var o__34102__auto___36955 = (function (){var o__34102__auto__ = (function (){var o__34102__auto__ = Promise;
-return (o__34102__auto__["resolve"]).call(o__34102__auto__);
+var o__41747__auto___45412 = (function (){var o__41747__auto__ = (function (){var o__41747__auto__ = Promise;
+return (o__41747__auto__["resolve"]).call(o__41747__auto__);
 })();
-return (o__34102__auto__["then"]).call(o__34102__auto__,callback);
+return (o__41747__auto__["then"]).call(o__41747__auto__,callback);
 })();
-(o__34102__auto___36955["catch"]).call(o__34102__auto___36955,devtools.async.rethrow_outside_promise);
+(o__41747__auto___45412["catch"]).call(o__41747__auto___45412,devtools.async.rethrow_outside_promise);
 
 return null;
 });
@@ -54,19 +54,19 @@ return null;
 } else {
 devtools.async._STAR_installed_STAR_ = true;
 
-var G__36956_36957 = Error;
-var target__34107__auto___36958 = G__36956_36957;
-if(cljs.core.truth_(target__34107__auto___36958)){
+var G__45413_45414 = Error;
+var target__41752__auto___45415 = G__45413_45414;
+if(cljs.core.truth_(target__41752__auto___45415)){
 } else {
-throw (new Error(["Assert failed: ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(["unable to locate object path ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(null)," in ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(G__36956_36957)].join('')),"\n","target__34107__auto__"].join('')));
+throw (new Error(["Assert failed: ",["unable to locate object path ",null," in ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(G__45413_45414)].join(''),"\n","target__41752__auto__"].join('')));
 }
 
-(target__34107__auto___36958["stackTraceLimit"] = Infinity);
+(target__41752__auto___45415["stackTraceLimit"] = Infinity);
 
 
 devtools.async.install_async_set_immediate_BANG_.call(null);
 
-if(cljs.core.truth_(devtools.async.needed_QMARK_.call(null))){
+if(devtools.async.needed_QMARK_.call(null)){
 } else {
 devtools.context.get_console.call(null).info(devtools.async.get_not_needed_message.call(null));
 }

@@ -15,8 +15,8 @@
 (js* "if(typeof window !== \"undefined\") {window.cljs.user = {}}")
 
 
-(defonce ^:private current-ns-eval (atom 'cljs.user))
-(defonce ^:private current-ns-compile (atom 'cljs.user))
+(defonce ^:public current-ns-eval (atom 'cljs.user))
+(defonce ^:public current-ns-compile (atom 'cljs.user))
 
 (defn reset-ns-eval! []
   (reset! current-ns-eval 'cljs.user))
@@ -354,7 +354,7 @@
   []
   (keys (::ana/namespaces @@st)))
 
-(defn- current-alias-map
+(defn current-alias-map
   ([] (current-alias-map @current-ns-eval))
   ([ns]
    (->> (merge (get-in @@st [::ana/namespaces ns :requires])

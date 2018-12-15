@@ -14,6 +14,7 @@
     [klipse-clj.lang.clojure.io :as io]
     [clojure.pprint :as pprint]
     [cljs.analyzer :as ana]
+    [cljs.repl :as cljs-repl :refer [error->str]]
     [cljs.tools.reader :as r]
     [cljs.tools.reader.reader-types :as rt]
     [clojure.string :as s]
@@ -44,22 +45,35 @@
       (init-custom-macros))))
 
 (defn display [value {:keys [print-length beautify-strings]}]
-  (with-redefs [*print-length* print-length]
-    (with-out-str (pprint/pprint
-                    (if (and (string? value) beautify-strings)
-                      (symbol value)
-                      value)))))
+  (try
+    (with-redefs [*print-length* print-length]
+      (with-out-str (pprint/pprint
+                     (if (and (string? value) beautify-strings)
+                       (symbol value)
+                       value))))
+    (catch js/Object e
+      (str "ERROR :" e))))
 
 (defn update-current-ns [{:keys [ns form warning error value success?]} verbose? current-ns]
   (when-not error
     (when verbose? (js/console.info "update-current-ns:" (str ns)))
     (reset! current-ns ns)))
 
+(defn display-err [error]
+  (try
+    (if (-> (ex-data (ex-cause error))
+            (contains? :clojure.error/phase))
+      (error->str (ex-cause error))
+      (str (ex-message error)
+           (when (ex-cause error) (str ": " (ex-cause error)))))
+    (catch js/Object e
+      e)))
+
 (defn result-as-str [{:keys [ns form warning error value success?] :as args} opts]
   (let [status (if error :error :ok)
         res (if-not error
-                (display value opts)
-             (pr-str error))]
+              (display value opts)
+              (display-err error))]
     [status res]))
 
 (defn read-result [{:keys [form warning error value success?]}]
@@ -193,10 +207,10 @@
 
 
 
-(defn populate-err [res {:keys [result-element container]}]
+(defn populate-err [err {:keys [result-element container]}]
   (when (and container (not result-element))
-    (gdom/setTextContent container (str (:error res))))
-  res)
+    (gdom/setTextContent container (display-err (:error err))))
+  err)
 
 
 (def completions get-completions)

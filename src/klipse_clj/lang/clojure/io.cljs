@@ -63,6 +63,7 @@
 
 (def skip-ns-macros #{'cljs.core
                       'cljs.pprint
+                      'cljs.repl
                       'cljs.env.macros
                       'cljs.analyzer.macros
                       'cljs.js
