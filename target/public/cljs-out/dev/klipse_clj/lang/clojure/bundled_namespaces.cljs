@@ -4,7 +4,6 @@
             cljs.env
             cljs.repl
             klipse-clj.repl
-            cljs.core.specs.alpha
             clojure.spec.alpha
             clojure.walk
             clojure.zip

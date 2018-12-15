@@ -6,7 +6,6 @@ goog.require('cljs.analyzer');
 goog.require('cljs.env');
 goog.require('cljs.repl');
 goog.require('klipse_clj.repl');
-goog.require('cljs.core.specs.alpha');
 goog.require('cljs.spec.alpha');
 goog.require('clojure.walk');
 goog.require('clojure.zip');
