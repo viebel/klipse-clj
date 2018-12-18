@@ -79,7 +79,7 @@
            (ex-message error)
            (when (ex-cause error) (str ": " (ex-cause error)))))
     (catch js/Object e
-      e)))
+      (str "Exception: ") e)))
 
 (defn result-as-str [{:keys [ns form warning error value success?] :as args} opts]
   (let [status (if error :error :ok)
@@ -125,7 +125,8 @@
   (let [c (chan)
         max-eval-duration (max max-eval-duration min-max-eval-duration)
         the-emits (if compile-display-guard (partial my-emits max-eval-duration) original-emits)]
-    (with-redefs [compiler/emits the-emits]
+    (with-redefs [;compiler/emits the-emits
+                  ]
       (cljs/eval-str st
                      s
                      "compile.klipse"
@@ -143,7 +144,8 @@
 (defn core-eval-an-exp [s {:keys [static-fns external-libs max-eval-duration verbose? st ns] :or {static-fns false external-libs nil max-eval-duration min-max-eval-duration verbose? false st nil}}]
   (let [c (chan)
         max-eval-duration (max max-eval-duration min-max-eval-duration)]
-    (with-redefs [compiler/emits (partial my-emits max-eval-duration)]
+    (with-redefs [;compiler/emits (partial my-emits max-eval-duration) ;; TODO Dec 19 2018 - it breaks simple compilation
+                  ]
                  ; we have to set `env/*compiler*` because `binding` and core.async don't play well together (https://www.reddit.com/r/Clojure/comments/4wrjw5/withredefs_doesnt_play_well_with_coreasync/) and the code of `eval-str` uses `binding` of `env/*compiler*`.
                  (cljs/eval-str st
                                 s

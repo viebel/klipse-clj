@@ -1,4 +1,4 @@
-(defproject viebel/klipse-clj "10.0.3"
+(defproject viebel/klipse-clj "10.0.4"
   :description "Self-hosted clojurescript library"
   :license "GPL-3.0"
   :url "https://github.com/viebel/klipse-clj"
