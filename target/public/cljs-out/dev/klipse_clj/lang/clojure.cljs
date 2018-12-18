@@ -14,7 +14,7 @@
     [klipse-clj.lang.clojure.io :as io]
     [clojure.pprint :as pprint]
     [cljs.analyzer :as ana]
-    [cljs.repl :as cljs-repl :refer [error->str]]
+    [klipse-clj.lang.cljs-repl :refer [error->str]] ;; once error->str is in cljs, take it from there
     [cljs.tools.reader :as r]
     [cljs.tools.reader.reader-types :as rt]
     [clojure.string :as s]

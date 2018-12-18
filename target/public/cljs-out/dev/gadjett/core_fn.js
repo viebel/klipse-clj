@@ -1,4 +1,4 @@
-// Compiled by ClojureScript 0.0.668480191 {}
+// Compiled by ClojureScript 1.10.439 {}
 goog.provide('gadjett.core_fn');
 goog.require('cljs.core');
 goog.require('gadjett.collections');
@@ -11,45 +11,45 @@ if((typeof gadjett !== 'undefined') && (typeof gadjett.core_fn !== 'undefined') 
 gadjett.core_fn.settings = new cljs.core.PersistentArrayMap(null, 4, [new cljs.core.Keyword(null,"max-function-calls","max-function-calls",-350003092),(50),new cljs.core.Keyword(null,"timeslot-function-calls-msec","timeslot-function-calls-msec",189712759),(1000),new cljs.core.Keyword(null,"compact-max-elements-in-seq","compact-max-elements-in-seq",418251211),(5),new cljs.core.Keyword(null,"compact-max-chars-in-str","compact-max-chars-in-str",240586724),(10)], null);
 }
 gadjett.core_fn.settings_BANG_ = (function gadjett$core_fn$settings_BANG_(var_args){
-var args__19135__auto__ = [];
-var len__19125__auto___41137 = arguments.length;
-var i__19126__auto___41138 = (0);
+var args__4647__auto__ = [];
+var len__4641__auto___31331 = arguments.length;
+var i__4642__auto___31332 = (0);
 while(true){
-if((i__19126__auto___41138 < len__19125__auto___41137)){
-args__19135__auto__.push((arguments[i__19126__auto___41138]));
+if((i__4642__auto___31332 < len__4641__auto___31331)){
+args__4647__auto__.push((arguments[i__4642__auto___31332]));
 
-var G__41139 = (i__19126__auto___41138 + (1));
-i__19126__auto___41138 = G__41139;
+var G__31333 = (i__4642__auto___31332 + (1));
+i__4642__auto___31332 = G__31333;
 continue;
 } else {
 }
 break;
 }
 
-var argseq__19136__auto__ = ((((0) < args__19135__auto__.length))?(new cljs.core.IndexedSeq(args__19135__auto__.slice((0)),(0),null)):null);
-return gadjett.core_fn.settings_BANG_.cljs$core$IFn$_invoke$arity$variadic(argseq__19136__auto__);
+var argseq__4648__auto__ = ((((0) < args__4647__auto__.length))?(new cljs.core.IndexedSeq(args__4647__auto__.slice((0)),(0),null)):null);
+return gadjett.core_fn.settings_BANG_.cljs$core$IFn$_invoke$arity$variadic(argseq__4648__auto__);
 });
 
-gadjett.core_fn.settings_BANG_.cljs$core$IFn$_invoke$arity$variadic = (function (p__41134){
-var map__41135 = p__41134;
-var map__41135__$1 = (((((!((map__41135 == null))))?(((((map__41135.cljs$lang$protocol_mask$partition0$ & (64))) || ((cljs.core.PROTOCOL_SENTINEL === map__41135.cljs$core$ISeq$))))?true:false):false))?cljs.core.apply.call(null,cljs.core.hash_map,map__41135):map__41135);
-var args = map__41135__$1;
+gadjett.core_fn.settings_BANG_.cljs$core$IFn$_invoke$arity$variadic = (function (p__31328){
+var map__31329 = p__31328;
+var map__31329__$1 = (((((!((map__31329 == null))))?(((((map__31329.cljs$lang$protocol_mask$partition0$ & (64))) || ((cljs.core.PROTOCOL_SENTINEL === map__31329.cljs$core$ISeq$))))?true:false):false))?cljs.core.apply.call(null,cljs.core.hash_map,map__31329):map__31329);
+var args = map__31329__$1;
 return gadjett.core_fn.settings = cljs.core.merge.call(null,gadjett.core_fn.settings,args);
 });
 
 gadjett.core_fn.settings_BANG_.cljs$lang$maxFixedArity = (0);
 
 /** @this {Function} */
-gadjett.core_fn.settings_BANG_.cljs$lang$applyTo = (function (seq41133){
-var self__19111__auto__ = this;
-return self__19111__auto__.cljs$core$IFn$_invoke$arity$variadic(cljs.core.seq.call(null,seq41133));
+gadjett.core_fn.settings_BANG_.cljs$lang$applyTo = (function (seq31327){
+var self__4629__auto__ = this;
+return self__4629__auto__.cljs$core$IFn$_invoke$arity$variadic(cljs.core.seq.call(null,seq31327));
 });
 
 gadjett.core_fn.add_event_and_filter = (function gadjett$core_fn$add_event_and_filter(timestamp_msec,events){
 var timeslot = new cljs.core.Keyword(null,"timeslot-function-calls-msec","timeslot-function-calls-msec",189712759).cljs$core$IFn$_invoke$arity$1(gadjett.core_fn.settings);
 return cljs.core.cons.call(null,timestamp_msec,cljs.core.take_while.call(null,((function (timeslot){
-return (function (p1__41140_SHARP_){
-return (p1__41140_SHARP_ > (timestamp_msec - timeslot));
+return (function (p1__31334_SHARP_){
+return (p1__31334_SHARP_ > (timestamp_msec - timeslot));
 });})(timeslot))
 ,events));
 });
@@ -71,8 +71,8 @@ return cljs.core.sort_by.call(null,cljs.core.second,gadjett.collections.map_obje
  * returns the history as an array, sorted by number of function calls
  */
 gadjett.core_fn.the_history = (function gadjett$core_fn$the_history(var_args){
-var G__41142 = arguments.length;
-switch (G__41142) {
+var G__31336 = arguments.length;
+switch (G__31336) {
 case 1:
 return gadjett.core_fn.the_history.cljs$core$IFn$_invoke$arity$1((arguments[(0)]));
 

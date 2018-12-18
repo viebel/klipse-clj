@@ -68,11 +68,6 @@
   "The namespace of the constants table as a symbol."
   'cljs.core.constants)
 
-(def ^:private identity-counter (atom 0))
-
-(defn- add-identity [m]
-  (assoc m :identity (swap! identity-counter inc)))
-
 #?(:clj
    (def transit-read-opts
      (try
@@ -692,12 +687,6 @@
                        screen location navigator history location
                        global process require module exports)))}))
 
-(defn- source-info->error-data
-  [{:keys [file line column]}]
-  {:clojure.error/source file
-   :clojure.error/line   line
-   :clojure.error/column column})
-
 (defn source-info
   ([env]
    (when (:line env)
@@ -722,20 +711,6 @@
   (doseq [handler *cljs-warning-handlers*]
     (handler warning-type env extra)))
 
-(defn- error-data
-  ([env phase]
-   (error-data env phase nil))
-  ([env phase symbol]
-   (merge (-> (source-info env) source-info->error-data)
-     {:clojure.error/phase phase}
-     (when symbol
-       {:clojure.error/symbol symbol}))))
-
-(defn- compile-syntax-error
-  [env msg symbol]
-  (ex-info nil (error-data env :compile-syntax-check symbol)
-    #?(:clj (RuntimeException. ^String msg) :cljs (js/Error. msg))))
-
 (defn error
   ([env msg]
    (error env msg nil))
@@ -749,20 +724,14 @@
   [ex]
   (= :cljs/analysis-error (:tag (ex-data ex))))
 
-(defn has-error-data?
-  #?(:cljs {:tag boolean})
-  [ex]
-  (contains? (ex-data ex) :clojure.error/phase))
-
 #?(:clj
    (defmacro wrapping-errors [env & body]
      `(try
         ~@body
         (catch Throwable err#
-          (cond
-            (has-error-data? err#) (throw err#)
-            (analysis-error? err#) (throw (ex-info nil (error-data ~env :compilation) err#))
-            :else (throw (ex-info nil (error-data ~env :compilation) (error ~env (.getMessage err#) err#))))))))
+          (if (analysis-error? err#)
+            (throw err#)
+            (throw (error ~env (.getMessage err#) err#)))))))
 
 ;; namespaces implicit to the inclusion of cljs.core
 (def implicit-nses '#{goog goog.object goog.string goog.array Math String})
@@ -916,41 +885,6 @@
                        (map symbol) vec)
                  'prototype)})
     x))
-
-(defn ->type-set
-  "Ensures that a type tag is a set."
-  [t]
-  (if #?(:clj  (set? t)
-         :cljs (cljs-set? t))
-    t
-    #{t}))
-
-(defn canonicalize-type [t]
-  "Ensures that a type tag is either nil, a type symbol, or a non-singleton
-  set of type symbols, absorbing clj-nil into seq and all types into any."
-  (cond
-    (symbol? t) t
-    (empty? t) nil
-    (== 1 (count t)) (first t)
-    (contains? t 'any) 'any
-    (contains? t 'seq) (let [res (disj t 'clj-nil)]
-                         (if (== 1 (count res))
-                           'seq
-                           res))
-    :else t))
-
-(defn add-types
-  "Produces a union of types."
-  ([] 'any)
-  ([t1] t1)
-  ([t1 t2]
-   (if (or (nil? t1)
-           (nil? t2))
-     'any
-     (-> (set/union (->type-set t1) (->type-set t2))
-       canonicalize-type)))
-  ([t1 t2 & ts]
-   (apply add-types (add-types t1 t2) ts)))
 
 (def alias->type
   '{object   Object
@@ -1412,15 +1346,16 @@
                              else-tag #{else-tag})]
               (into then-tag else-tag))))))))
 
-(defn infer-invoke [env {f :fn :keys [args] :as e}]
-  (let [me (assoc (find-matching-method f args) :op :fn-method)]
-    (if-some [ret-tag (infer-tag env me)]
+(defn infer-invoke [env e]
+  (let [{info :info :as f} (:fn e)]
+    (if-some [ret-tag (if (or (true? (:fn-var info))
+                              (true? (:js-fn-var info)))
+                        (:ret-tag info)
+                        (when (= 'js (:ns info)) 'js))]
       ret-tag
-      (let [{:keys [info]} f]
-        (if-some [ret-tag (if (or (true? (:fn-var info))
-                                  (true? (:js-fn-var info)))
-                            (:ret-tag info)
-                            (when (= 'js (:ns info)) 'js))]
+      (let [args (:args e)
+            me (assoc (find-matching-method f args) :op :fn-method)]
+        (if-some [ret-tag (infer-tag env me)]
           ret-tag
           ANY_SYM)))))
 
@@ -1506,115 +1441,14 @@
      :form form}
     (var-ast env sym)))
 
-(def ^:private predicate->tag
-  '{
-    ;; Base values
-    cljs.core/nil?            clj-nil
-    cljs.core/undefined?      clj-nil
-    cljs.core/false?          boolean
-    cljs.core/true?           boolean
-    cljs.core/zero?           number
-    cljs.core/infinite?       number
-
-    ;; Base types
-    cljs.core/boolean?        boolean
-    cljs.core/string?         string
-    cljs.core/char?           string
-    cljs.core/number?         number
-    cljs.core/integer?        number
-    cljs.core/float?          number
-    cljs.core/double?         number
-    cljs.core/array?          array
-    cljs.core/seq?            seq
-
-    ;; JavaScript types
-    cljs.core/regexp?         js/RegExp
-
-    ;; Types
-    cljs.core/keyword?        cljs.core/Keyword
-    cljs.core/var?            cljs.core/Var
-    cljs.core/symbol?         cljs.core/Symbol
-    cljs.core/volatile?       cljs.core/Volatile
-    cljs.core/delay?          cljs.core/Delay
-    cljs.core/reduced?        cljs.core/Reduced
-
-    ;;; Note: For non-marker protocol entries below, we
-    ;;; omit predicates that are based on satisfies? because
-    ;;; we cannot safely apply the fast-path optimization
-    ;;; which is enabled when the protocol type is inferred.
-    ;;; If adding a non-marker entry here, also add a test to
-    ;;; cljs.extend-to-native-test/test-extend-to-protocols.
-
-    ;; Protocols
-    cljs.core/map-entry?      cljs.core/IMapEntry
-    cljs.core/uuid?           cljs.core/IUUID
-    cljs.core/tagged-literal? cljs.core/ITaggedLiteral
-    cljs.core/inst?           cljs.core/Inst
-    cljs.core/sequential?     cljs.core/ISequential
-    cljs.core/list?           cljs.core/IList
-    cljs.core/record?         cljs.core/IRecord
-    cljs.core/chunked-seq?    cljs.core/IChunkedSeq
-
-    ;; Composites
-    cljs.core/seqable?        #{cljs.core/ISeqable array string}
-    cljs.core/ident?          #{cljs.core/Keyword cljs.core/Symbol}
-    })
-
-(defn- simple-predicate-induced-tag
-  "Look for a predicate-induced tag when the test expression is a simple
-   application of a predicate to a local, as in (string? x)."
-  [env test]
-  (when (and (list? test)
-             (== 2 (count test))
-             (every? symbol? test))
-    (let [analyzed-fn (no-warn (analyze (assoc env :context :expr) (first test)))]
-      (when (= :var (:op analyzed-fn))
-        (when-let [tag (predicate->tag (:name analyzed-fn))]
-          (let [sym (last test)]
-            (when (and (nil? (namespace sym))
-                       (get-in env [:locals sym]))
-              [sym tag])))))))
-
-(defn- type-check-induced-tag
-  "Look for a type-check-induced tag when the test expression is the use of
-   instance? on a local, as in (instance? ICounted x)."
-  [env test]
-  (when (and (list? test)
-             (== 3 (count test))
-             (every? symbol? test))
-    (let [analyzed-fn (no-warn (analyze (assoc env :context :expr) (first test)))]
-      (when (= :var (:op analyzed-fn))
-        (when ('#{cljs.core/instance?} (:name analyzed-fn))
-          (let [analyzed-type (no-warn (analyze (assoc env :context :expr) (second test)))
-                tag (:name analyzed-type)
-                sym (last test)]
-            (when (and (= :var (:op analyzed-type))
-                       (nil? (namespace sym))
-                       (get-in env [:locals sym]))
-              [sym tag])))))))
-
-(defn- add-predicate-induced-tags
-  "Looks at the test and adds any tags which are induced by virtue
-  of the predicate being satisfied. For example in (if (string? x) x :bar)
-  the local x in the then branch must be of string type."
-  [env test]
-  (let [[local tag] (or (simple-predicate-induced-tag env test)
-                        (type-check-induced-tag env test))]
-    (cond-> env
-      local (update-in [:locals local :tag] (fn [prev-tag]
-                                              (if (or (nil? prev-tag)
-                                                      (= 'any prev-tag))
-                                                tag
-                                                prev-tag))))))
-
 (defmethod parse 'if
   [op env [_ test then else :as form] name _]
   (when (< (count form) 3)
-    (throw (compile-syntax-error env "Too few arguments to if" 'if)))
+    (throw (error env "Too few arguments to if")))
   (when (> (count form) 4)
-    (throw (compile-syntax-error env "Too many arguments to if" 'if)))
+   (throw (error env "Too many arguments to if")))
   (let [test-expr (disallowing-recur (analyze (assoc env :context :expr) test))
-        then-expr (allowing-redef (analyze (add-predicate-induced-tags env test) then))
+        then-expr (allowing-redef (analyze env then))
         else-expr (allowing-redef (analyze env else))]
     {:env env :op :if :form form
      :test test-expr :then then-expr :else else-expr
@@ -2014,8 +1848,7 @@
         fixed-arity     (count params')
         recur-frame     {:protocol-impl (:protocol-impl env)
                          :params        params
-                         :flag          (atom nil)
-                         :tags          (atom [])}
+                         :flag          (atom nil)}
         recur-frames    (cons recur-frame *recur-frames*)
         body-env        (assoc env :context :return :locals locals)
         body-form       `(do ~@body)
@@ -2268,13 +2101,10 @@
                      ;; TODO: can we simplify - David
                      (merge be
                        {:fn-var true
-                        ;; copy over the :fn-method information we need for invoke type inference
-                        :methods (into [] (map #(select-keys % [:tag :fixed-arity :variadic?]) (:methods init-expr)))
                         :variadic? (:variadic? init-expr)
                         :max-fixed-arity (:max-fixed-arity init-expr)
                         :method-params (map :params (:methods init-expr))})
-                     be)
-                be (add-identity be)]
+                     be)]
             (recur (conj bes be)
               (assoc-in env [:locals name] be)
               (next bindings))))
@@ -2292,23 +2122,14 @@
     (analyze-let-body* env context exprs)))
 
 (defn analyze-let
-  [encl-env [_ bindings & exprs :as form] is-loop widened-tags]
+  [encl-env [_ bindings & exprs :as form] is-loop]
   (when-not (and (vector? bindings) (even? (count bindings)))
     (throw (error encl-env "bindings must be vector of even number of elements")))
   (let [context      (:context encl-env)
         op           (if (true? is-loop) :loop :let)
-        bindings     (if widened-tags
-                       (vec (mapcat
-                              (fn [[name init] widened-tag]
-                                [(vary-meta name assoc :tag widened-tag) init])
-                              (partition 2 bindings)
-                              widened-tags))
-                       bindings)
         [bes env]    (analyze-let-bindings encl-env bindings op)
         recur-frame  (when (true? is-loop)
-                       {:params bes
-                        :flag (atom nil)
-                        :tags (atom (mapv :tag bes))})
+                       {:params bes :flag (atom nil)})
         recur-frames (if recur-frame
                        (cons recur-frame *recur-frames*)
                        *recur-frames*)
@@ -2316,27 +2137,21 @@
                        (true? is-loop) *loop-lets*
                        (some? *loop-lets*) (cons {:params bes} *loop-lets*))
         expr         (analyze-let-body env context exprs recur-frames loop-lets)
-        children     [:bindings :body]
-        nil->any     (fnil identity 'any)]
-    (if (and is-loop
-             (not widened-tags)
-             (not= (mapv nil->any @(:tags recur-frame))
-                   (mapv (comp nil->any :tag) bes)))
-      (recur encl-env form is-loop @(:tags recur-frame))
-      {:op       op
-       :env      encl-env
-       :bindings bes
-       :body     (assoc expr :body? true)
-       :form     form
-       :children children})))
+        children     [:bindings :body]]
+    {:op op
+     :env encl-env
+     :bindings bes
+     :body (assoc expr :body? true)
+     :form form
+     :children children}))
 
 (defmethod parse 'let*
   [op encl-env form _ _]
-  (analyze-let encl-env form false nil))
+  (analyze-let encl-env form false))
 
 (defmethod parse 'loop*
   [op encl-env form _ _]
-  (analyze-let encl-env form true nil))
+  (analyze-let encl-env form true))
 
 (defmethod parse 'recur
   [op env [_ & exprs :as form] _ _]
@@ -2356,10 +2171,6 @@
                (not add-implicit-target-object?))
       (warning :protocol-impl-recur-with-target env {:form (:form (first exprs))}))
     (reset! (:flag frame) true)
-    (swap! (:tags frame) (fn [tags]
-                           (mapv (fn [tag expr]
-                                   (add-types tag (:tag expr)))
-                             tags exprs)))
     (assoc {:env env :op :recur :form form}
       :frame frame
       :exprs exprs
@@ -2456,20 +2267,6 @@
                           (when (:field texpr)
                             texpr))))
               vexpr (analyze enve val)]
-          ;; as top level fns are decomposed for Closure cross-module code motion, we need to
-          ;; restore their :methods information
-          (when (seq? target)
-            (let [sym  (some-> target second)
-                  meta (meta sym)]
-              (when-let [info (and (= :fn (:op vexpr)) (:top-fn meta))]
-                (swap! env/*compiler* update-in
-                  [::namespaces (-> env :ns :name) :defs sym :methods]
-                  (fnil conj [])
-                  ;; just use original fn meta, as the fn method is already desugared
-                  ;; only get tag from analysis
-                  (merge
-                    (select-keys info [:fixed-arity :variadic?])
-                    (select-keys (-> vexpr :methods first) [:tag]))))))
           (when-not texpr
             (throw (error env "set! target must be a field or a symbol naming a var")))
           (cond
@@ -3724,21 +3521,14 @@
        (when (some? (find-ns-obj 'cljs.spec.alpha))
          @cached-var))))
 
-(defn- var->sym [var]
-  #?(:clj  (symbol (str (.-ns ^clojure.lang.Var var)) (str (.-sym ^clojure.lang.Var var)))
-     :cljs (.-sym var)))
-
 (defn- do-macroexpand-check
-  [env form mac-var]
+  [form mac-var]
   (when (not (-> @env/*compiler* :options :spec-skip-macros))
     (let [mchk #?(:clj (some-> (find-ns 'clojure.spec.alpha)
                        (ns-resolve 'macroexpand-check))
                 :cljs (get-macroexpand-check-var))]
     (when (some? mchk)
-      (try
-        (mchk mac-var (next form))
-        (catch #?(:clj Throwable :cljs :default) e
-          (throw (ex-info nil (error-data env :macro-syntax-check (var->sym mac-var)) e))))))))
+      (mchk mac-var (next form))))))
 
 (defn macroexpand-1*
   [env form]
@@ -3746,19 +3536,17 @@
     (if (contains? specials op)
       (do
         (when (= 'ns op)
-          (do-macroexpand-check env form (get-expander 'cljs.core/ns-special-form env)))
+          (do-macroexpand-check form (get-expander 'cljs.core/ns-special-form env)))
         form)
       ;else
         (if-some [mac-var (when (symbol? op) (get-expander op env))]
           (#?@(:clj [binding [*ns* (create-ns *cljs-ns*)]]
                :cljs [do])
-            (do-macroexpand-check env form mac-var)
+            (do-macroexpand-check form mac-var)
             (let [form' (try
                           (apply @mac-var form env (rest form))
                           #?(:clj (catch ArityException e
-                                    (throw (ArityException. (- (.actual e) 2) (.name e)))))
-                          (catch #?(:clj Throwable :cljs :default) e
-                            (throw (ex-info nil (error-data env :macroexpansion (var->sym mac-var)) e))))]
+                                    (throw (ArityException. (- (.actual e) 2) (.name e))))))]
               (if #?(:clj (seq? form') :cljs (cljs-seq? form'))
                 (let [sym' (first form')
                       sym  (first form)]
@@ -3935,18 +3723,12 @@
          :meta meta-expr :expr expr :children [:meta :expr]})
       expr)))
 
-(defn infer-type [env {:keys [tag] :as ast} _]
-  (if (or (nil? tag) (= 'function tag))
-    ;; infer-type won't get a chance to process :methods
-    ;; so treat :fn as a special case for now, could probably
-    ;; fix up to use :children to walk child nodes
-    (if (= :fn (:op ast))
-      (update ast :methods
-        (fn [ms] (into [] (map #(infer-type env % _)) ms)))
+(defn infer-type [env ast _]
+    (if (nil? (:tag ast))
       (if-some [tag (infer-tag env ast)]
-        (assoc ast :tag tag)
-        ast))
-    ast))
+          (assoc ast :tag tag)
+          ast)
+      ast))
 
 (defn- repl-self-require? [env deps]
   (and (:repl-env env) (some #{*cljs-ns*} deps)))
@@ -4523,8 +4305,6 @@
      (when env/*compiler*
        (:options @env/*compiler*))))
   ([forms opts]
-   (analyze-form-seq forms opts false))
-  ([forms opts return-last?]
    (let [env (assoc (empty-env) :build-options opts)]
      (binding [*file-defs* nil
                #?@(:clj [*unchecked-if* false
@@ -4532,17 +4312,15 @@
                *cljs-ns* 'cljs.user
                *cljs-file* nil
                reader/*alias-map* (or reader/*alias-map* {})]
-       (loop [ns nil forms forms last-ast nil]
+       (loop [ns nil forms forms]
          (if (some? forms)
            (let [form (first forms)
                  env  (assoc env :ns (get-namespace *cljs-ns*))
                  ast  (analyze env form nil opts)]
              (if (= (:op ast) :ns)
-               (recur (:name ast) (next forms) ast)
-               (recur ns (next forms) ast)))
-           (if return-last?
-             last-ast
-             ns)))))))
+               (recur (:name ast) (next forms))
+               (recur ns (next forms))))
+           ns))))))
 
 (defn ensure-defs
   "Ensures that a non-nil defs map exists in the compiler state for a given
