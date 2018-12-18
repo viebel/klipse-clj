@@ -52,7 +52,7 @@
                        (symbol value)
                        value))))
     (catch js/Object e
-      (str "ERROR :" e))))
+      (str "Execution error.\n" e))))
 
 (defn update-current-ns [{:keys [ns form warning error value success?]} verbose? current-ns]
   (when-not error
@@ -75,7 +75,8 @@
       (error->str (ex-cause error))
       (reader-error? error)  (str "Syntax error reading source." "\n" (error-message error))
       :else
-      (str (ex-message error)
+      (str "Execution error.\n"
+           (ex-message error)
            (when (ex-cause error) (str ": " (ex-cause error)))))
     (catch js/Object e
       e)))
