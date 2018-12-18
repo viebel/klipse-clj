@@ -59,11 +59,22 @@
     (when verbose? (js/console.info "update-current-ns:" (str ns)))
     (reset! current-ns ns)))
 
+(defn- reader-error?
+  [e]
+  (= :reader-exception (:type (ex-data e))))
+
+(defn- error-message [error]
+  (if (instance? ExceptionInfo error)
+                                 (ex-message error)
+                                 (.-message error)))
 (defn display-err [error]
   (try
-    (if (-> (ex-data (ex-cause error))
-            (contains? :clojure.error/phase))
+    (cond
+      (-> (ex-data (ex-cause error))
+          (contains? :clojure.error/phase))
       (error->str (ex-cause error))
+      (reader-error? error)  (str "Syntax error reading source." "\n" (error-message error))
+      :else
       (str (ex-message error)
            (when (ex-cause error) (str ": " (ex-cause error)))))
     (catch js/Object e
@@ -219,7 +230,7 @@
   (go
     (try
       (<! (create-state-eval))
-      (loop [[exp rest-exps] (first-exp-and-rest s @st @current-ns-eval)
+      (loop [[exp rest-exps]  (first-exp-and-rest s @st @current-ns-eval)
              last-res nil]
         (if (not (empty? exp))
           (let [res (<! (core-eval-an-exp exp (assoc opts :st @st :ns current-ns-eval)))]
