@@ -827,22 +827,35 @@
       (core/quot c 32)
       (core/inc (core/quot c 32)))))
 
+(core/defn- compatible? [inferred-tag allowed-tags]
+  (if (set? inferred-tag)
+    (clojure.set/subset? inferred-tag allowed-tags)
+    (contains? allowed-tags inferred-tag)))
+
+(core/defn- typed-expr? [env form allowed-tags]
+  (compatible? (cljs.analyzer/infer-tag env
+                 (cljs.analyzer/no-warn (cljs.analyzer/analyze env form)))
+    allowed-tags))
+
+(core/defn- string-expr [e]
+  (vary-meta e assoc :tag 'string))
+
 (core/defmacro str
   ([] "")
   ([x]
-   (if (core/string? x)
+   (if (typed-expr? &env x '#{string})
      x
-     (core/list 'js* "cljs.core.str.cljs$core$IFn$_invoke$arity$1(~{})" x)))
+     (string-expr (core/list 'js* "cljs.core.str.cljs$core$IFn$_invoke$arity$1(~{})" x))))
   ([x & ys]
    (core/let [interpolate (core/fn [x]
-                            (if (core/string? x)
+                            (if (typed-expr? &env x '#{string clj-nil})
                               "~{}"
                               "cljs.core.str.cljs$core$IFn$_invoke$arity$1(~{})"))
               strs        (core/->> (core/list* x ys)
                             (map interpolate)
                             (interpose ",")
                             (apply core/str))]
-     (list* 'js* (core/str "[" strs "].join('')") x ys))))
+     (string-expr (list* 'js* (core/str "[" strs "].join('')") x ys)))))
 
 (core/defn- bool-expr [e]
   (vary-meta e assoc :tag 'boolean))
@@ -1857,7 +1870,7 @@
                                                    (not-empty (dissoc ~'__extmap k#))
                                                    nil)))
                         'ISeqable
-                        `(~'-seq [this#] (seq (concat [~@(map #(core/list 'cljs.core.MapEntry. (keyword %) % nil) base-fields)]
+                        `(~'-seq [this#] (seq (concat [~@(map #(core/list 'cljs.core/MapEntry. (keyword %) % nil) base-fields)]
                                                 ~'__extmap)))
 
                         'IIterable
@@ -2009,14 +2022,29 @@
   => 17"
   [psym & doc+methods]
   (core/let [p (:name (cljs.analyzer/resolve-var (dissoc &env :locals) psym))
-             [doc methods] (if (core/string? (first doc+methods))
-                             [(first doc+methods) (next doc+methods)]
-                             [nil doc+methods])
-             psym (vary-meta psym assoc
-                    :doc doc
-                    :protocol-symbol true)
+             [opts methods]
+             (core/loop [opts {:protocol-symbol true}
+                         methods []
+                         sigs doc+methods]
+               (core/if-not (seq sigs)
+                 [opts methods]
+                 (core/let [[head & tail] sigs]
+                   (core/cond
+                     (core/string? head)
+                     (recur (assoc opts :doc head) methods tail)
+                     (core/keyword? head)
+                     (recur (assoc opts head (first tail)) methods (rest tail))
+                     (core/list? head)
+                     (recur opts (conj methods head) tail)
+                     :else
+                     (throw #?(:clj  (Exception.
+                                       (core/str "Invalid protocol, " psym " received unexpected argument"))
+                               :cljs (js/Error.
+                                       (core/str "Invalid protocol, " psym " received unexpected argument"))))
+                     ))))
+             psym (vary-meta psym merge opts)
              ns-name (core/-> &env :ns :name)
-             fqn (core/fn [n] (symbol (core/str ns-name "." n)))
+             fqn (core/fn [n] (symbol (core/str ns-name) (core/str n)))
              prefix (protocol-prefix p)
              _ (core/doseq [[mname & arities] methods]
                  (core/when (some #{0} (map count (filter vector? arities)))
@@ -2034,21 +2062,44 @@
                                                      (core/symbol? arg) arg
                                                      (core/and (map? arg) (core/some? (:as arg))) (:as arg)
                                                      :else (gensym))) sig)
-                                           sig)]
-                            `(~sig
-                              (if (and (not (nil? ~(first sig)))
-                                    (not (nil? (. ~(first sig) ~(symbol (core/str "-" slot)))))) ;; Property access needed here.
-                                (. ~(first sig) ~slot ~@sig)
-                                (let [x# (if (nil? ~(first sig)) nil ~(first sig))
-                                      m# (unchecked-get ~(fqn fname) (goog/typeOf x#))]
-                                  (if-not (nil? m#)
-                                    (m# ~@sig)
-                                    (let [m# (unchecked-get ~(fqn fname) "_")]
-                                      (if-not (nil? m#)
-                                        (m# ~@sig)
-                                        (throw
-                                          (missing-protocol
-                                            ~(core/str psym "." fname) ~(first sig)))))))))))
+                                           sig)
+
+                                     fqn-fname (fqn fname)
+                                     fsig (first sig)
+
+                                     ;; construct protocol checks in reverse order
+                                     ;; check the.protocol/fn["_"] for default impl last
+                                     check
+                                     `(let [m# (unchecked-get ~fqn-fname "_")]
+                                        (if-not (nil? m#)
+                                          (m# ~@sig)
+                                          (throw
+                                            (missing-protocol
+                                              ~(core/str psym "." fname) ~fsig))))
+
+                                     ;; then check protocol fn in metadata (only when protocol is marked with :extend-via-metadata true)
+                                     check
+                                     (core/if-not (:extend-via-metadata opts)
+                                       check
+                                       `(if-let [meta-impl# (-> ~fsig (core/meta) (core/get '~fqn-fname))]
+                                          (meta-impl# ~@sig)
+                                          ~check))
+
+                                     ;; then check protocol on js string,function,array,object
+                                     check
+                                     `(let [x# (if (nil? ~fsig) nil ~fsig)
+                                            m# (unchecked-get ~fqn-fname (goog/typeOf x#))]
+                                        (if-not (nil? m#)
+                                          (m# ~@sig)
+                                          ~check))
+
+                                     ;; then check protocol property on object (first check actually executed)
+                                     check
+                                     `(if (and (not (nil? ~fsig))
+                                               (not (nil? (. ~fsig ~(symbol (core/str "-" slot)))))) ;; Property access needed here.
+                                        (. ~fsig ~slot ~@sig)
+                                        ~check)]
+                            `(~sig ~check)))
              psym (core/-> psym
                     (vary-meta update-in [:jsdoc] conj
                       "@interface")
@@ -2575,7 +2626,7 @@
                        (interpose ",")
                        (apply core/str))]
     (vary-meta
-      (list* 'js* (core/str "{" kvs-str "}") (apply concat kvs))
+      (list* 'js* (core/str "({" kvs-str "})") (apply concat kvs))
       assoc :tag 'object)))
 
 (core/defmacro js-obj [& rest]
@@ -3055,7 +3106,8 @@
               `[(set! (. ~sym ~'-cljs$lang$maxFixedArity)
                   ~(core/dec (count sig)))])
           (js-inline-comment " @this {Function} ")
-          (set! (. ~sym ~'-cljs$lang$applyTo)
+          ;; dissoc :top-fn so this helper gets ignored in cljs.analyzer/parse 'set!
+          (set! (. ~(vary-meta sym dissoc :top-fn) ~'-cljs$lang$applyTo)
             ~(apply-to)))))))
 
 (core/defmacro copy-arguments [dest]
@@ -3080,15 +3132,18 @@
                sig   (remove '#{&} arglist)
                c-1   (core/dec (count sig))
                macro? (:macro meta)
+               mfa   (core/cond-> c-1 macro? (core/- 2))
                meta  (assoc meta
                        :top-fn
                        {:variadic? true
-                        :max-fixed-arity (core/cond-> c-1 macro? (core/- 2))
+                        :fixed-arity mfa
+                        :max-fixed-arity mfa
                         :method-params (core/cond-> [sig] macro? elide-implicit-macro-args)
                         :arglists (core/cond-> (core/list arglist) macro? elide-implicit-macro-args)
-                        :arglists-meta (doall (map meta [arglist]))})]
+                        :arglists-meta (doall (map meta [arglist]))})
+               name  (with-meta name meta)]
       `(do
-         (def ~(with-meta name meta)
+         (def ~name
            (fn [~'var_args]
              (let [args# (array)]
                (copy-arguments args#)
@@ -3096,7 +3151,7 @@
                                (new ^::ana/no-resolve cljs.core/IndexedSeq
                                  (.slice args# ~c-1) 0 nil))]
                  (. ~rname (~'cljs$core$IFn$_invoke$arity$variadic ~@(dest-args c-1) argseq#))))))
-         ~(variadic-fn* rname method)
+         ~(variadic-fn* name method)
          ~(core/when emit-var? `(var ~name))))))
 
 (core/comment
@@ -3117,11 +3172,14 @@
                          (~(symbol
                              (core/str "cljs$core$IFn$_invoke$arity$" c))
                            ~@(dest-args c)))]))
-               (fn-method [[sig & body :as method]]
+               (fn-method [name [sig & body :as method]]
                  (if (some '#{&} sig)
                    (variadic-fn* name method false)
+                   ;; fix up individual :fn-method meta for
+                   ;; cljs.analyzer/parse 'set! :top-fn handling
                    `(set!
-                      (. ~name
+                      (. ~(vary-meta name update :top-fn merge
+                            {:variadic? false :fixed-arity (count sig)})
                         ~(symbol (core/str "-cljs$core$IFn$_invoke$arity$"
                                    (count sig))))
                       (fn ~method))))]
@@ -3135,19 +3193,22 @@
                             (map count sigs)
                             [(core/- (count (first (filter varsig? arglists))) 2)]))
                macro?   (:macro meta)
+               mfa      (core/cond-> maxfa macro? (core/- 2))
                meta     (assoc meta
                           :top-fn
                           {:variadic? variadic
-                           :max-fixed-arity (core/cond-> maxfa macro? (core/- 2))
+                           :fixed-arity mfa
+                           :max-fixed-arity mfa
                            :method-params (core/cond-> sigs macro? elide-implicit-macro-args)
                            :arglists (core/cond-> arglists macro? elide-implicit-macro-args)
                            :arglists-meta (doall (map meta arglists))})
                args-sym (gensym "args")
-               param-counts (map count arglists)]
+               param-counts (map count arglists)
+               name     (with-meta name meta)]
       (core/when (not= (distinct param-counts) param-counts)
         (ana/warning :overload-arity {} {:name name}))
       `(do
-         (def ~(with-meta name meta)
+         (def ~name
            (fn [~'var_args]
              (case (alength (js-arguments))
                ~@(mapcat #(fixed-arity rname %) sigs)
@@ -3165,7 +3226,7 @@
                              (str "Invalid arity: " (- (alength (js-arguments)) 2))))
                     `(throw (js/Error.
                              (str "Invalid arity: " (alength (js-arguments))))))))))
-         ~@(map fn-method fdecl)
+         ~@(map #(fn-method name %) fdecl)
          ;; optimization properties
          (set! (. ~name ~'-cljs$lang$maxFixedArity) ~maxfa)
          ~(core/when emit-var? `(var ~name))))))

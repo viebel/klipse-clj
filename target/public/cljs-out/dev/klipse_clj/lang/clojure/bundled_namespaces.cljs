@@ -8,6 +8,7 @@
             clojure.walk
             clojure.zip
             clojure.data
+            clojure.datafy
             clojure.set
             klipse-clj.tools))
 

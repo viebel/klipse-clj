@@ -1,4 +1,4 @@
-// Compiled by ClojureScript 1.10.439 {}
+// Compiled by ClojureScript 1.10.492 {}
 goog.provide('parinfer_codemirror.state');
 goog.require('cljs.core');
 if((typeof parinfer_codemirror !== 'undefined') && (typeof parinfer_codemirror.state !== 'undefined') && (typeof parinfer_codemirror.state.state !== 'undefined')){

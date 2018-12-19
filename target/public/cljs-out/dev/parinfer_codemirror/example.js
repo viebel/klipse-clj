@@ -1,4 +1,4 @@
-// Compiled by ClojureScript 1.10.439 {}
+// Compiled by ClojureScript 1.10.492 {}
 goog.provide('parinfer_codemirror.example');
 goog.require('cljs.core');
 goog.require('clojure.string');
@@ -23,8 +23,8 @@ parinfer_codemirror.example.editor_opts = new cljs.core.PersistentArrayMap(null,
  * Create a non-parinfer editor.
  */
 parinfer_codemirror.example.create_regular_editor_BANG_ = (function parinfer_codemirror$example$create_regular_editor_BANG_(var_args){
-var G__28866 = arguments.length;
-switch (G__28866) {
+var G__30639 = arguments.length;
+switch (G__30639) {
 case 1:
 return parinfer_codemirror.example.create_regular_editor_BANG_.cljs$core$IFn$_invoke$arity$1((arguments[(0)]));
 
@@ -62,8 +62,8 @@ parinfer_codemirror.example.create_regular_editor_BANG_.cljs$lang$maxFixedArity 
  * Create a parinfer editor.
  */
 parinfer_codemirror.example.create_editor_BANG_ = (function parinfer_codemirror$example$create_editor_BANG_(var_args){
-var G__28869 = arguments.length;
-switch (G__28869) {
+var G__30642 = arguments.length;
+switch (G__30642) {
 case 2:
 return parinfer_codemirror.example.create_editor_BANG_.cljs$core$IFn$_invoke$arity$2((arguments[(0)]),(arguments[(1)]));
 

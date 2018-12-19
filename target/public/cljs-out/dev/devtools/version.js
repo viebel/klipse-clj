@@ -1,4 +1,4 @@
-// Compiled by ClojureScript 1.10.439 {}
+// Compiled by ClojureScript 1.10.492 {}
 goog.provide('devtools.version');
 goog.require('cljs.core');
 devtools.version.current_version = "0.9.10";

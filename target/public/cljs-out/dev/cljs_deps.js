@@ -75,11 +75,13 @@ goog.addDependency("../com/cognitect/transit/types.js", ['com.cognitect.transit.
 goog.addDependency("../com/cognitect/transit/impl/decoder.js", ['com.cognitect.transit.impl.decoder'], ['com.cognitect.transit.util', 'com.cognitect.transit.delimiters', 'com.cognitect.transit.caching', 'com.cognitect.transit.types']);
 goog.addDependency("../com/cognitect/transit/impl/reader.js", ['com.cognitect.transit.impl.reader'], ['com.cognitect.transit.impl.decoder', 'com.cognitect.transit.caching']);
 goog.addDependency("../parinfer_codemirror/state.js", ['parinfer_codemirror.state'], ['cljs.core']);
+goog.addDependency("../clojure/core/protocols.js", ['clojure.core.protocols'], ['cljs.core']);
+goog.addDependency("../clojure/datafy.js", ['clojure.datafy'], ['cljs.core', 'clojure.core.protocols']);
 goog.addDependency("../cljs/analyzer/api.js", ['cljs.analyzer.api'], ['cljs.core', 'cljs.env', 'cljs.analyzer']);
 goog.addDependency("../klipse_clj/repl_resources.js", ['klipse_clj.repl_resources'], ['cljs.core']);
 goog.addDependency("../klipse_clj/repl.js", ['klipse_clj.repl'], ['cljs.js', 'cljs.core', 'klipse_clj.repl_resources', 'cljs.analyzer', 'clojure.string', 'cljs.spec.alpha']);
-goog.addDependency("../cljs/repl.js", ['cljs.repl'], ['cljs.core', 'cljs.spec.alpha']);
-goog.addDependency("../klipse_clj/lang/clojure/bundled_namespaces.js", ['klipse_clj.lang.clojure.bundled_namespaces'], ['clojure.zip', 'cljs.core', 'cljs.analyzer.api', 'cljs.env', 'klipse_clj.repl', 'clojure.set', 'cljs.analyzer', 'cljs.repl', 'cljs.spec.alpha', 'clojure.data', 'clojure.walk', 'klipse_clj.tools']);
+goog.addDependency("../cljs/repl.js", ['cljs.repl'], ['goog.string', 'cljs.core', 'goog.string.format', 'cljs.spec.alpha']);
+goog.addDependency("../klipse_clj/lang/clojure/bundled_namespaces.js", ['klipse_clj.lang.clojure.bundled_namespaces'], ['clojure.datafy', 'clojure.zip', 'cljs.core', 'cljs.analyzer.api', 'cljs.env', 'klipse_clj.repl', 'clojure.set', 'cljs.analyzer', 'cljs.repl', 'cljs.spec.alpha', 'clojure.data', 'clojure.walk', 'klipse_clj.tools']);
 goog.addDependency("../com/cognitect/transit/handlers.js", ['com.cognitect.transit.handlers'], ['com.cognitect.transit.util', 'com.cognitect.transit.types', 'goog.math.Long']);
 goog.addDependency("../com/cognitect/transit/impl/writer.js", ['com.cognitect.transit.impl.writer'], ['com.cognitect.transit.util', 'com.cognitect.transit.caching', 'com.cognitect.transit.handlers', 'com.cognitect.transit.types', 'com.cognitect.transit.delimiters', 'goog.math.Long']);
 goog.addDependency("../com/cognitect/transit.js", ['com.cognitect.transit'], ['com.cognitect.transit.util', 'com.cognitect.transit.impl.reader', 'com.cognitect.transit.impl.writer', 'com.cognitect.transit.types', 'com.cognitect.transit.eq', 'com.cognitect.transit.impl.decoder', 'com.cognitect.transit.caching']);
