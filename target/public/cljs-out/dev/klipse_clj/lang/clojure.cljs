@@ -44,21 +44,6 @@
       (reset! st (cljs/empty-state))
       (init-custom-macros))))
 
-(defn display [value {:keys [print-length beautify-strings]}]
-  (try
-    (with-redefs [*print-length* print-length]
-      (with-out-str (pprint/pprint
-                     (if (and (string? value) beautify-strings)
-                       (symbol value)
-                       value))))
-    (catch js/Object e
-      (str "Execution error.\n" e))))
-
-(defn update-current-ns [{:keys [ns form warning error value success?]} verbose? current-ns]
-  (when-not error
-    (when verbose? (js/console.info "update-current-ns:" (str ns)))
-    (reset! current-ns ns)))
-
 (defn- reader-error?
   [e]
   (= :reader-exception (:type (ex-data e))))
@@ -67,6 +52,7 @@
   (if (instance? ExceptionInfo error)
                                  (ex-message error)
                                  (.-message error)))
+
 (defn display-err [error]
   (try
     (cond
@@ -81,12 +67,29 @@
     (catch js/Object e
       (str "Exception: ") e)))
 
+(defn display [value {:keys [print-length beautify-strings]}]
+  (try
+    (with-redefs [*print-length* print-length]
+      [:ok (with-out-str (pprint/pprint
+                          (if (and (string? value) beautify-strings)
+                            (symbol value)
+                            value)))])
+    (catch js/Object e
+      [:error (display-err (ex-info (str e)
+                                    {:tag :klipse/print-error}
+                                    (ex-info (str e)
+                                             #:clojure.error{:phase :print-eval-result})))])))
+
+(defn update-current-ns [{:keys [ns form warning error value success?]} verbose? current-ns]
+  (when-not error
+    (when verbose? (js/console.info "update-current-ns:" (str ns)))
+    (reset! current-ns ns)))
+
 (defn result-as-str [{:keys [ns form warning error value success?] :as args} opts]
-  (let [status (if error :error :ok)
-        res (if-not error
-              (display value opts)
-              (display-err error))]
-    [status res]))
+  (let [status (if error :error :ok)]
+    (if-not error
+      (display value opts)
+      [:error (display-err error)])))
 
 (defn read-result [{:keys [form warning error value success?]}]
   (let [status (if error :error :ok)
