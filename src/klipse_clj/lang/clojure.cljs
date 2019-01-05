@@ -180,7 +180,7 @@
   tags/*cljs-data-readers*)
 
 (defn first-exp-and-rest [s st ns]
-  (binding [r/*alias-map* (current-alias-map ns)
+  (binding [r/*alias-map* (current-alias-map ns st)
             *ns* ns
             ana/*cljs-ns* ns
             env/*compiler* st
@@ -202,7 +202,7 @@
   "A good way to read a string as cljs.reader/read-string has many bugs."
   ([s] (read-string s @st @current-ns-eval))
   ([s st ns]
-   (binding [r/*alias-map* (current-alias-map ns)
+   (binding [r/*alias-map* (current-alias-map ns st)
              *ns* ns
              ana/*cljs-ns* ns
              env/*compiler* st

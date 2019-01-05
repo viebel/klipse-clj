@@ -223,16 +223,7 @@
 
 
 ;;;; DISPLAY
-(deftest display-evaluation-with-errors
-  "displays evaluation when an error occurs"
-  (async done
-    (go (are [in out]
-          (a= (second (result-as-str {:success? false :error in} 2)) out)
-          nil "nil"
-          (str "ab") "\"ab\""
-          1 "1"
-          [1 2] "[1 2]")
-        (done))))
+
 
 (deftest display-evaluation-and-beautify
   "displays evaluation properly and beautify it"

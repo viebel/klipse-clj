@@ -355,10 +355,10 @@
   (keys (::ana/namespaces @@st)))
 
 (defn current-alias-map
-  ([] (current-alias-map @current-ns-eval))
-  ([ns]
-   (->> (merge (get-in @@st [::ana/namespaces ns :requires])
-               (get-in @@st [::ana/namespaces ns :require-macros]))
+  ([] (current-alias-map @current-ns-eval @st))
+  ([ns state]
+   (->> (merge (get-in @state [::ana/namespaces ns :requires])
+               (get-in @state [::ana/namespaces ns :require-macros]))
         (remove (fn [[k v]] (= k v)))
         (into {}))))
 
