@@ -7,6 +7,7 @@
             clojure.spec.alpha
             clojure.walk
             clojure.zip
+            clojure.edn
             clojure.data
             clojure.datafy
             clojure.set
