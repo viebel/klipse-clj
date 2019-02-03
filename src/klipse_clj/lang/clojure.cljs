@@ -35,7 +35,7 @@
     (<! (load-core-macros-cache))
     (doseq [my-macros ["(require '[klipse-clj.repl :refer-macros [doc]])"
                        "(require-macros '[klipse-clj.macros :refer [dbg]])"]]
-      (<! (core-eval-an-exp my-macros {:st @st :ns current-ns-eval})))))
+      (<! (first (core-eval-an-exp my-macros {:st @st :ns current-ns-eval}))))))
 
 (defn create-state-eval []
   (if @st
@@ -186,8 +186,8 @@
                            (let [warnings (<! (read-until-closed! warnings-chan))]
                              (update-current-ns res verbose? ns)
                              (put! res-chan res)                           
-                             (put! agg-warnings-chan (s/join "" warnings))))))))
-    [res-chan agg-warnings-chan]))
+                             (put! agg-warnings-chan (s/join "" warnings))))))
+        [res-chan agg-warnings-chan]))))
 
 (defn- read-chars
   [reader]
@@ -268,13 +268,19 @@
             (let [[c d] (core-eval-an-exp exp (assoc opts :st @st :ns current-ns-eval))
                   res (<! c)]
               (if (:error res)
-                (populate-err res opts)
+                (do
+                  (close! warnings-chan)
+                  (put! res-chan res)
+                  (populate-err res opts))
                 (recur (first-exp-and-rest rest-exps @st @current-ns-eval)
                        res
                        (str warnings (<! d)))))
-            (do (put! warnings-chan warnings)
-                (put! res-chan last-res))))
+            (do
+              (put! warnings-chan warnings)
+              (put! res-chan last-res))))
         (catch js/Object e
+          (close! warnings-chan)
+          (put! res-chan {:error e})
           (populate-err {:error e} opts))))
     [res-chan warnings-chan]))
 
@@ -295,21 +301,29 @@
         {:error e}))))
 
 
-(defn eval-async [s opts]
+(defn eval-async-map [s opts]
   (go
     (let [[res-chan warnings-chan] (core-eval s opts)
           res-str (-> (<! res-chan)
                       (result-as-str opts))
           warnings (<! warnings-chan)]
-      (if (:display_warnings opts)
-        {:warnings warnings
-         :res res-str}
-        res-str))))
+      {:warnings warnings
+       :res res-str})))
+
+
+(defn eval-async [s opts]
+  (go
+    (let [[res-chan warnings-chan] (core-eval s opts)
+          res-str (-> (<! res-chan)
+                      (result-as-str opts))
+          _ (<! warnings-chan)]
+      res-str)))
+
 
 (defn the-eval
   "used for testing"
   ([s] (the-eval s {}))
-  ([s opts] (go (-> (<! (core-eval s opts))
+  ([s opts] (go (-> (<! (first (core-eval s opts)))
                     read-result))))
 
 (defn eval-and-callback
@@ -346,8 +360,8 @@
             (setup-container-fn container-id))
           (binding [*print-newline* true
                     *print-fn* #(put! c %)]
-            (put! c (-> (<! (eval-async exp opts))
-                        second))))))
+            (let [{:keys [warnings res]} (<! (eval-async-map exp opts))]
+              (put! c (str warnings (second res))))))))
     c))
 
 (defn main []
