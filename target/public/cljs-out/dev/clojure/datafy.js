@@ -1,4 +1,4 @@
-// Compiled by ClojureScript 1.10.492 {}
+// Compiled by ClojureScript 1.10.516 {}
 goog.provide('clojure.datafy');
 goog.require('cljs.core');
 goog.require('clojure.core.protocols');

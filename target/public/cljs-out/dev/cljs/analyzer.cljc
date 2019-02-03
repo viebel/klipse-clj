@@ -11,7 +11,7 @@
      :cljs (:refer-clojure :exclude [macroexpand-1 ns-interns ensure js-reserved]))
   #?(:cljs (:require-macros
              [cljs.analyzer.macros
-              :refer [no-warn wrapping-errors
+              :refer [no-warn wrapping-errors with-warning-handlers
                       disallowing-recur allowing-redef disallowing-ns*]]
              [cljs.env.macros :refer [ensure]]))
   #?(:clj (:require [cljs.util :as util :refer [ns->relpath topo-sort]]
@@ -721,6 +721,14 @@
 (defn warning [warning-type env extra]
   (doseq [handler *cljs-warning-handlers*]
     (handler warning-type env extra)))
+
+(defn- accumulating-warning-handler [warn-acc]
+  (fn [warning-type env extra]
+    (when (warning-type *cljs-warnings*)
+      (swap! warn-acc conj [warning-type env extra]))))
+
+(defn- replay-accumulated-warnings [warn-acc]
+  (run! #(apply warning %) @warn-acc))
 
 (defn- error-data
   ([env phase]
@@ -1593,19 +1601,27 @@
                        (get-in env [:locals sym]))
               [sym tag])))))))
 
-(defn- add-predicate-induced-tags
-  "Looks at the test and adds any tags which are induced by virtue
-  of the predicate being satisfied. For example in (if (string? x) x :bar)
+(defn- truth-induced-tag
+  "Refine a tag to exclude clj-nil if the test is a simple symbol."
+  [env test]
+  (when (and (symbol? test)
+             (nil? (namespace test)))
+    (let [analyzed-symbol (no-warn (analyze (assoc env :context :expr) test))]
+      (when-let [tag (:tag analyzed-symbol)]
+        (when (and (set? tag)
+                   (contains? tag 'clj-nil))
+          [test (canonicalize-type (disj tag 'clj-nil))])))))
+
+(defn- set-test-induced-tags
+  "Looks at the test and sets any tags which are induced by virtue
+  of the test being truthy. For example in (if (string? x) x :bar)
   the local x in the then branch must be of string type."
   [env test]
   (let [[local tag] (or (simple-predicate-induced-tag env test)
-                        (type-check-induced-tag env test))]
+                        (type-check-induced-tag env test)
+                        (truth-induced-tag env test))]
     (cond-> env
-      local (update-in [:locals local :tag] (fn [prev-tag]
-                                              (if (or (nil? prev-tag)
-                                                      (= 'any prev-tag))
-                                                tag
-                                                prev-tag))))))
+      local (assoc-in [:locals local :tag] tag))))
 
 (defmethod parse 'if
   [op env [_ test then else :as form] name _]
@@ -1614,7 +1630,7 @@
   (when (> (count form) 4)
     (throw (compile-syntax-error env "Too many arguments to if" 'if)))
   (let [test-expr (disallowing-recur (analyze (assoc env :context :expr) test))
-        then-expr (allowing-redef (analyze (add-predicate-induced-tags env test) then))
+        then-expr (allowing-redef (analyze (set-test-induced-tags env test) then))
         else-expr (allowing-redef (analyze env else))]
     {:env env :op :if :form form
      :test test-expr :then then-expr :else else-expr
@@ -2315,7 +2331,14 @@
         loop-lets    (cond
                        (true? is-loop) *loop-lets*
                        (some? *loop-lets*) (cons {:params bes} *loop-lets*))
-        expr         (analyze-let-body env context exprs recur-frames loop-lets)
+        ;; Accumulate warnings for deferred replay iff there's a possibility of re-analyzing
+        warn-acc     (when (and is-loop
+                                (not widened-tags))
+                       (atom []))
+        expr         (if warn-acc
+                       (with-warning-handlers [(accumulating-warning-handler warn-acc)]
+                         (analyze-let-body env context exprs recur-frames loop-lets))
+                       (analyze-let-body env context exprs recur-frames loop-lets))
         children     [:bindings :body]
         nil->any     (fnil identity 'any)]
     (if (and is-loop
@@ -2323,12 +2346,15 @@
              (not= (mapv nil->any @(:tags recur-frame))
                    (mapv (comp nil->any :tag) bes)))
       (recur encl-env form is-loop @(:tags recur-frame))
-      {:op       op
-       :env      encl-env
-       :bindings bes
-       :body     (assoc expr :body? true)
-       :form     form
-       :children children})))
+      (do
+        (when warn-acc
+          (replay-accumulated-warnings warn-acc))
+        {:op       op
+         :env      encl-env
+         :bindings bes
+         :body     (assoc expr :body? true)
+         :form     form
+         :children children}))))
 
 (defmethod parse 'let*
   [op encl-env form _ _]
@@ -3495,12 +3521,16 @@
 ;; TODO: analyzed analyzed? should take pass name as qualified keyword arg
 ;; then compiler passes can mark/check individually - David
 
+(defn- unsorted-map? [x]
+  (and (map? x)
+       (not (sorted? x))))
+
 (defn analyzed
   "Mark a form as being analyzed. Assumes x satisfies IMeta. Useful to suppress
   warnings that will have been caught by a first compiler pass."
   [x]
   (cond
-    (map? x) (assoc x ::analyzed true)
+    (unsorted-map? x) (assoc x ::analyzed true)
     :else (vary-meta x assoc ::analyzed true)))
 
 (defn analyzed?
@@ -3509,7 +3539,7 @@
   [x]
   (boolean
     (cond
-      (map? x) (::analyzed x)
+      (unsorted-map? x) (::analyzed x)
       :else (::analyzed (meta x)))))
 
 (defn- all-values?
@@ -3626,8 +3656,11 @@
           ret  {:env env :form sym}
           lcls (:locals env)]
       (if-some [lb (handle-symbol-local sym (get lcls sym))]
-        (merge (assoc ret :op :local :info lb)
-               (select-keys lb [:name :local :arg-id :variadic? :init]))
+        (merge
+          (assoc ret :op :local :info lb)
+          ;; this is a temporary workaround for core.async see CLJS-3030 - David
+          (when (map? lb)
+            (select-keys lb [:name :local :arg-id :variadic? :init])))
         (let [sym-meta (meta sym)
               sym-ns (namespace sym)
               cur-ns (str (-> env :ns :name))

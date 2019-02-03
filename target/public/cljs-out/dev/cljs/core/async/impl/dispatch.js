@@ -1,4 +1,4 @@
-// Compiled by ClojureScript 1.10.492 {}
+// Compiled by ClojureScript 1.10.516 {}
 goog.provide('cljs.core.async.impl.dispatch');
 goog.require('cljs.core');
 goog.require('cljs.core.async.impl.buffers');
@@ -12,16 +12,16 @@ cljs.core.async.impl.dispatch.running_QMARK_ = true;
 
 cljs.core.async.impl.dispatch.queued_QMARK_ = false;
 
-var count_18719 = (0);
+var count_18981 = (0);
 while(true){
-var m_18720 = cljs.core.async.impl.dispatch.tasks.pop();
-if((m_18720 == null)){
+var m_18982 = cljs.core.async.impl.dispatch.tasks.pop();
+if((m_18982 == null)){
 } else {
-m_18720.call(null);
+m_18982.call(null);
 
-if((count_18719 < cljs.core.async.impl.dispatch.TASK_BATCH_SIZE)){
-var G__18721 = (count_18719 + (1));
-count_18719 = G__18721;
+if((count_18981 < cljs.core.async.impl.dispatch.TASK_BATCH_SIZE)){
+var G__18983 = (count_18981 + (1));
+count_18981 = G__18983;
 continue;
 } else {
 }

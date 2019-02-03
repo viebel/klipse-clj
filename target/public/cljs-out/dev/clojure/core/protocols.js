@@ -1,4 +1,4 @@
-// Compiled by ClojureScript 1.10.492 {}
+// Compiled by ClojureScript 1.10.516 {}
 goog.provide('clojure.core.protocols');
 goog.require('cljs.core');
 
@@ -14,19 +14,19 @@ clojure.core.protocols.datafy = (function clojure$core$protocols$datafy(o){
 if((((!((o == null)))) && ((!((o.clojure$core$protocols$Datafiable$datafy$arity$1 == null)))))){
 return o.clojure$core$protocols$Datafiable$datafy$arity$1(o);
 } else {
-var x__4304__auto__ = (((o == null))?null:o);
-var m__4305__auto__ = (clojure.core.protocols.datafy[goog.typeOf(x__4304__auto__)]);
-if((!((m__4305__auto__ == null)))){
-return m__4305__auto__.call(null,o);
+var x__4433__auto__ = (((o == null))?null:o);
+var m__4434__auto__ = (clojure.core.protocols.datafy[goog.typeOf(x__4433__auto__)]);
+if((!((m__4434__auto__ == null)))){
+return m__4434__auto__.call(null,o);
 } else {
 var temp__5718__auto__ = cljs.core.get.call(null,cljs.core.meta.call(null,o),new cljs.core.Symbol("clojure.core.protocols","datafy","clojure.core.protocols/datafy",707534751,null));
 if(temp__5718__auto__){
-var meta_impl__4303__auto__ = temp__5718__auto__;
-return meta_impl__4303__auto__.call(null,o);
+var meta_impl__4432__auto__ = temp__5718__auto__;
+return meta_impl__4432__auto__.call(null,o);
 } else {
-var m__4302__auto__ = (clojure.core.protocols.datafy["_"]);
-if((!((m__4302__auto__ == null)))){
-return m__4302__auto__.call(null,o);
+var m__4431__auto__ = (clojure.core.protocols.datafy["_"]);
+if((!((m__4431__auto__ == null)))){
+return m__4431__auto__.call(null,o);
 } else {
 throw cljs.core.missing_protocol.call(null,"Datafiable.datafy",o);
 }
@@ -60,19 +60,19 @@ clojure.core.protocols.nav = (function clojure$core$protocols$nav(coll,k,v){
 if((((!((coll == null)))) && ((!((coll.clojure$core$protocols$Navigable$nav$arity$3 == null)))))){
 return coll.clojure$core$protocols$Navigable$nav$arity$3(coll,k,v);
 } else {
-var x__4304__auto__ = (((coll == null))?null:coll);
-var m__4305__auto__ = (clojure.core.protocols.nav[goog.typeOf(x__4304__auto__)]);
-if((!((m__4305__auto__ == null)))){
-return m__4305__auto__.call(null,coll,k,v);
+var x__4433__auto__ = (((coll == null))?null:coll);
+var m__4434__auto__ = (clojure.core.protocols.nav[goog.typeOf(x__4433__auto__)]);
+if((!((m__4434__auto__ == null)))){
+return m__4434__auto__.call(null,coll,k,v);
 } else {
 var temp__5718__auto__ = cljs.core.get.call(null,cljs.core.meta.call(null,coll),new cljs.core.Symbol("clojure.core.protocols","nav","clojure.core.protocols/nav",298936762,null));
 if(temp__5718__auto__){
-var meta_impl__4303__auto__ = temp__5718__auto__;
-return meta_impl__4303__auto__.call(null,coll,k,v);
+var meta_impl__4432__auto__ = temp__5718__auto__;
+return meta_impl__4432__auto__.call(null,coll,k,v);
 } else {
-var m__4302__auto__ = (clojure.core.protocols.nav["_"]);
-if((!((m__4302__auto__ == null)))){
-return m__4302__auto__.call(null,coll,k,v);
+var m__4431__auto__ = (clojure.core.protocols.nav["_"]);
+if((!((m__4431__auto__ == null)))){
+return m__4431__auto__.call(null,coll,k,v);
 } else {
 throw cljs.core.missing_protocol.call(null,"Navigable.nav",coll);
 }

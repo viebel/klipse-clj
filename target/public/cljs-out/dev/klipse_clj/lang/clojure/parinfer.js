@@ -1,4 +1,4 @@
-// Compiled by ClojureScript 1.10.492 {}
+// Compiled by ClojureScript 1.10.516 {}
 goog.provide('klipse_clj.lang.clojure.parinfer');
 goog.require('cljs.core');
 goog.require('parinfer_codemirror.editor');
