@@ -19,7 +19,7 @@
     [cljs.tools.reader.reader-types :as rt]
     [clojure.string :as s]
     [cljs.compiler :as compiler]
-    [cljs.core.async :refer [timeout chan put! <!]]
+    [cljs.core.async :refer [timeout chan close! put! <!]]
     [cljs.env :as env]
     [cljs.js :as cljs]))
 
@@ -144,27 +144,50 @@
                           (put! c res))))
     c))
 
+
+(defn warning-handler [c warning-type env extra]
+  (when (warning-type ana/*cljs-warnings*)
+    (when-let [s (ana/error-message warning-type extra)]
+      (put! c (str (ana/message env (str "WARNING: " s)) "\n")))))
+
+(defn read-until-closed! [c]
+  (let [d (chan)]
+    (go-loop
+        [res []]
+      (let [x (<! c)]
+        (if (nil? x)
+          (put! d res)
+          (recur (conj res x)))))
+    d))
+
 (defn core-eval-an-exp [s {:keys [static-fns external-libs max-eval-duration verbose? st ns] :or {static-fns false external-libs nil max-eval-duration min-max-eval-duration verbose? false st nil}}]
-  (let [c (chan)
+  (let [res-chan (chan)
+        warnings-chan (chan 1024)
+        agg-warnings-chan (chan )
         max-eval-duration (max max-eval-duration min-max-eval-duration)]
-    (with-redefs [;compiler/emits (partial my-emits max-eval-duration) ;; TODO Dec 19 2018 - it breaks simple compilation
-                  ]
-                 ; we have to set `env/*compiler*` because `binding` and core.async don't play well together (https://www.reddit.com/r/Clojure/comments/4wrjw5/withredefs_doesnt_play_well_with_coreasync/) and the code of `eval-str` uses `binding` of `env/*compiler*`.
-                 (cljs/eval-str st
-                                s
-                                "my.klipse"
-                                {:eval          my-eval
-                                 :ns            @ns
-                                 :def-emits-var true
-                                 :verbose       verbose?
-                                 :*compiler*    (set! env/*compiler* st)
-                                 :context       :expr
-                                 :static-fns    static-fns
-                                 :load          (partial io/load-ns external-libs)}
-                                (fn [res]
-                                  (update-current-ns res verbose? ns)
-                                  (put! c res))))
-    c))
+    (binding [ana/*cljs-warning-handlers* [(partial warning-handler warnings-chan)]]
+      (with-redefs [;compiler/emits (partial my-emits max-eval-duration) ;; TODO Dec 19 2018 - it breaks simple compilation
+                    ]
+                                        ; we have to set `env/*compiler*` because `binding` and core.async don't play well together (https://www.reddit.com/r/Clojure/comments/4wrjw5/withredefs_doesnt_play_well_with_coreasync/) and the code of `eval-str` uses `binding` of `env/*compiler*`.
+        (cljs/eval-str st
+                       s
+                       "my.klipse"
+                       {:eval          my-eval
+                        :ns            @ns
+                        :def-emits-var true
+                        :verbose       verbose?
+                        :*compiler*    (set! env/*compiler* st)
+                        :context       :expr
+                        :static-fns    static-fns
+                        :load          (partial io/load-ns external-libs)}
+                       (fn [res]
+                         (close! warnings-chan)
+                         (go
+                           (let [warnings (<! (read-until-closed! warnings-chan))]
+                             (update-current-ns res verbose? ns)
+                             (put! res-chan res)                           
+                             (put! agg-warnings-chan (s/join "" warnings))))))))
+    [res-chan agg-warnings-chan]))
 
 (defn- read-chars
   [reader]
@@ -233,20 +256,27 @@
 (def completions get-completions)
 
 (defn core-eval [s opts]
-  (go
-    (try
-      (<! (create-state-eval))
-      (loop [[exp rest-exps]  (first-exp-and-rest s @st @current-ns-eval)
-             last-res nil]
-        (if (not (empty? exp))
-          (let [res (<! (core-eval-an-exp exp (assoc opts :st @st :ns current-ns-eval)))]
-            (if (:error res)
-              (populate-err res opts)
-              (recur (first-exp-and-rest rest-exps @st @current-ns-eval)
-                     res)))
-          last-res))
-      (catch js/Object e
-        (populate-err {:error e} opts)))))
+  (let [res-chan (chan)
+        warnings-chan (chan)]
+    (go
+      (try
+        (<! (create-state-eval))
+        (loop [[exp rest-exps]  (first-exp-and-rest s @st @current-ns-eval)
+               last-res nil
+               warnings ""]
+          (if (not (empty? exp))
+            (let [[c d] (core-eval-an-exp exp (assoc opts :st @st :ns current-ns-eval))
+                  res (<! c)]
+              (if (:error res)
+                (populate-err res opts)
+                (recur (first-exp-and-rest rest-exps @st @current-ns-eval)
+                       res
+                       (str warnings (<! d)))))
+            (do (put! warnings-chan warnings)
+                (put! res-chan last-res))))
+        (catch js/Object e
+          (populate-err {:error e} opts))))
+    [res-chan warnings-chan]))
 
 
 (defn core-compile [s opts]
@@ -267,8 +297,14 @@
 
 (defn eval-async [s opts]
   (go
-    (-> (<! (core-eval s opts))
-        (result-as-str opts))))
+    (let [[res-chan warnings-chan] (core-eval s opts)
+          res-str (-> (<! res-chan)
+                      (result-as-str opts))
+          warnings (<! warnings-chan)]
+      (if (:display_warnings opts)
+        {:warnings warnings
+         :res res-str}
+        res-str))))
 
 (defn the-eval
   "used for testing"
