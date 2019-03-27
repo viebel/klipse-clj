@@ -1,1 +1,0 @@
-{"version":3,"file":"\/Users\/viebel\/prj\/klipse-clj\/target\/public\/cljs-out\/dev\/klipse_clj\/tools.js","sources":["tools.cljs"],"lineCount":9,"mappings":";AAAA;;;AAIA,wBAAA,xBAAMA,wDAAMC;AAAZ,AACE,OAAA,oFAAQ,AAACC,uBAAY,AAACC,+BAAaF,KAAKG","names":["klipse-clj.tools\/eval","form","cljs.js\/eval","cljs.js\/empty-state","cljs.core\/identity"]}
