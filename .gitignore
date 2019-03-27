@@ -1,4 +1,5 @@
 .idea/
+classes
 *.iml
 out/
 target/
