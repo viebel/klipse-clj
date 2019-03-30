@@ -91,12 +91,12 @@
       (display value opts)
       [:error (display-err error)])))
 
-(defn result-as-prepl-map [form-str {:keys [ns form warning error value success?] :as args} out]
-  {:tag (if error :err :ret)
-   :ns ns
-   :out out
-   :form form-str
-   :ret (if error error value)})
+(defn result-as-prepl-map [form-str {:keys [ns form warning error value success?] :as args} opts]
+  (let [[status val] (result-as-str args opts)]
+    {:tag (if (= :error status) :err :ret)
+     :ns ns
+     :val val
+     :form form-str}))
 
 (defn read-result [{:keys [form warning error value success?]}]
   (let [status (if error :error :ok)
@@ -374,13 +374,13 @@
 (defn eval-async-prepl
   ([s] (eval-async-prepl s {}))
   ([s opts]
-   (let [out-str (atom "")]
+   (let [c (chan)]
      (go
-      (binding [*print-newline* true
-                *print-fn* (fn [s]
-                             (swap! out-str str s))]
+      (binding [*print-fn* (fn [s]
+                             (put! c {:val s :tag :out}))]
         (as-> (<! (first (core-eval s opts))) $
-              (result-as-prepl-map s $ @out-str)))))))
+              (put! c (result-as-prepl-map s $ opts)))))
+     c)))
 
 (defn main []
   (js/console.log "main"))
@@ -393,11 +393,14 @@
             `(inc ~x))
             (hello nil nil 13)" {:verbose? false}))))
   (go (println (<! (eval-async-map "(map inc [1 2 3])" {}))))
-  (go (def a (<! (eval-async-prepl "(map inc [1 2 3])" {}))))
-  (go (println (<! (eval-async-prepl "(map inc [1 2 3)" {}))))
-
-  (go (def a (<! (eval-async-prepl "(do (println (+ 1 2)) (println 87) 89)" {}))))
+  (go (def a (<! (eval-async-prepl "(map inc [1 2 3])" {:print-length 1}))))
   a
+  (go (def b (<! (eval-async-prepl "(map inc [1 2 3)" {}))))
+  b
+
+  (def c (eval-async-prepl "(do (println (+ 1 2)) (println 87) 89)"))
+  (go (def bbb (<! c)))
+  bbb
   (println 99)
   )
 
