@@ -1,6 +1,5 @@
 (ns klipse-clj.lang.clojure.io
   (:require-macros [gadjett.core :refer [dbg]]
-                   [purnam.core :refer [? !>]]
                    [cljs.core.async.macros :refer [go go-loop]])
   (:require
    [cljs.js :as cljs]
@@ -10,7 +9,8 @@
    [clojure.string :as string :refer [join split lower-case]]
    [cljs-http.client :as http]
    [cljs-http.util :refer [transit-decode]]
-   [cljs.core.async :refer [<!]]))
+   [cljs.core.async :refer [<!]]
+   [applied-science.js-interop :as j]))
 
 (def ^:dynamic *klipse-settings* {})
 (def ^:dynamic *verbose?* false)
@@ -217,7 +217,7 @@
   (if (or (buggy-bundled-ns-ignore? name)
           (custom-bundled-ns-ignore? name))
     false
-    (not (nil? (!> js/goog.getObjectByName (str (munge name))))))) ; (:require goog breaks the build see http://dev.clojure.org/jira/browse/CLJS-1677
+    (not (nil? (j/call js/goog :getObjectByName (str (munge name))))))) ; (:require goog breaks the build see http://dev.clojure.org/jira/browse/CLJS-1677
 
 (defn cljsjs? [name]
   (re-matches #"cljsjs\..*" (str name)))
@@ -232,9 +232,9 @@
   "some cljsjs packages are already loaded e.g react in klipse app"
   [name]
   (or
-   (and (= name 'cljsjs.react) (? js/window.React))
-   (and (= name 'cljsjs.react.dom.server) (? js/window.ReactDOMServer))
-   (and (= name 'cljsjs.react.dom) (? js/window.ReactDOM))))
+   (and (= name 'cljsjs.react) (j/get js/window :React))
+   (and (= name 'cljsjs.react.dom.server) (j/get js/window :ReactDOMServer))
+   (and (= name 'cljsjs.react.dom) (j/get js/window :ReactDOM))))
 
 (defn try-to-load-cljsjs-ns
   "Try to load the js file corresponding to a cljsjs package.
@@ -320,7 +320,7 @@
 
 (defmethod load-ns :goog [_ {:keys [name path]} src-cb]
   (cond
-    (!> js/goog.getObjectByName (str name)) (src-cb {:lang :js :source ""}); isProvided and nameToPath don't work with :optimizations :simple or :whitespace
+    (j/call js/goog :getObjectByName (str name)) (src-cb {:lang :js :source ""}); isProvided and nameToPath don't work with :optimizations :simple or :whitespace
     :else (let [closure-github-path "https://raw.githubusercontent.com/google/closure-library/v20160713/closure/"
                 filenames (map #(str closure-github-path % ".js") ((juxt fix-goog-path identity another-goog-path simple-goog-path) path))]
             (try-to-load-ns filenames :js :source src-cb))))
