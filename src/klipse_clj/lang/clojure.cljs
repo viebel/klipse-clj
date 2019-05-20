@@ -33,7 +33,7 @@
   (go
     (<! (load-core-macros-cache))
     (doseq [my-macros ["(require '[klipse-clj.repl :refer-macros [doc]])"
-                       "(require-macros '[klipse-clj.macros :refer [dbg]])"]]
+                       "(require-macros '[klipse-clj.macros :refer [dbg inferred-type]])"]]
       (<! (first (core-eval-an-exp my-macros {:st @st :ns current-ns-eval}))))))
 
 (defn create-state-eval []
@@ -386,11 +386,14 @@
 
 (comment
   (enable-console-print!)
+  (go (<! (create-state-eval))
+      (println "init done"))
   (go (println (<! (the-eval "(ns my.hello$macros)
             (defmacro hello
             [x]
             `(inc ~x))
             (hello nil nil 13)" {:verbose? false}))))
+  (go (println (<! (the-eval "(doc map)" {:verbose? true}))))
   (go (println (<! (eval-async-map "(map inc [1 2 3])" {}))))
   (go (def a (<! (eval-async-prepl "(map inc [1 2 3])" {:print-length 1}))))
   a
