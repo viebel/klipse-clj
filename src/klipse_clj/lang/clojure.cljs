@@ -393,7 +393,7 @@
             [x]
             `(inc ~x))
             (hello nil nil 13)" {:verbose? false}))))
-  (go (println (<! (the-eval "(doc map)" {:verbose? true}))))
+  (go (println (<! (the-eval "(inferred-type (if x 2 \"a\"))" {:verbose? true}))))
   (go (println (<! (eval-async-map "(map inc [1 2 3])" {}))))
   (go (def a (<! (eval-async-prepl "(map inc [1 2 3])" {:print-length 1}))))
   a
