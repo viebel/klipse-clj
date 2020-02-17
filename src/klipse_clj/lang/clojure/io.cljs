@@ -156,7 +156,7 @@
   (re-matches (cached-macro-ns-regexp) (str name)))
 
 (defn cached-ns-regexp []
-  (:clojure_cached_ns_regexp *klipse-settings* #"cljs.core.specs.alpha|cljs\.stacktrace|cljs\.core\.[async|match].*|cljs\.spec.*|clojure.math\.combinatorics|clojure.test.check.*|reagent\..*|om\..*|clojure\.data|cljs.tools.reader.*|cljs-time\..*|re-frame\..*|day8\.re-frame\..*|reagent-forms\..*|re-frisk\..*|re-frisk-shell\..*|datafrisk\..*|ajax\..*|cljs\.tools\.reader\..*|cljs-bean\.*|expound\..*"))
+  (:clojure_cached_ns_regexp *klipse-settings* #"cljs.core.specs.alpha|cljs\.stacktrace|cljs\.core\.[async|match].*|cljs\.spec.*|clojure.math\.combinatorics|clojure.test.check.*|reagent\..*|om\..*|clojure\.data|cljs.tools.reader.*|cljs-time\..*|re-frame\..*|day8\.re-frame\..*|reagent-forms\..*|re-frisk\..*|re-frisk-shell\..*|datafrisk\..*|ajax\..*|cljs\.tools\.reader\..*|cljs-bean\..*|expound\..*"))
 
 
 (defn cached-cljs-ns? [name]
