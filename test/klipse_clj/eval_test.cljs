@@ -119,41 +119,52 @@
 (deftest test-eval-spec-alpha
   "eval with namespaces"
   (async done
-    (go (are [input-clj output-clj]
-          (b= (<! (the-eval input-clj)) [:ok output-clj])
-          "(ns your.spec)
+         (go (are [input-clj output-clj]
+                 (b= (<! (the-eval input-clj)) [:ok output-clj])
+               "(ns your.spec)
           (require '[clojure.spec.alpha :as s])" nil
-          "(s/def ::x integer?)" :your.spec/x
-          "(require '[clojure.spec.alpha :as s]
+               "(s/def ::x integer?)" :your.spec/x
+               "(require '[clojure.spec.alpha :as s]
              '[cljs.spec.test.alpha :as stest]
              '[clojure.spec.gen.alpha :as gen])" nil
-          "(defn foo [x] x)
+               "(defn foo [x] x)
           (s/fdef foo :args (s/cat :x ::x)
            :ret string?)
            (s/describe (s/get-spec `foo))" '(fspec :args (cat :x :your.spec/x) :ret string? :fn nil)
-          "(s/describe (:args (s/get-spec `foo)))" '(cat :x :your.spec/x)
-          "(stest/instrument `foo)" ['your.spec/foo]
-          "(foo 1)" 1
-          "(stest/unstrument `foo)" ['your.spec/foo]
-          "(foo :a)" :a
-          )
-        (done))))
+               "(s/describe (:args (s/get-spec `foo)))" '(cat :x :your.spec/x)
+               "(stest/instrument `foo)" ['your.spec/foo]
+               "(foo 1)" 1
+               "(stest/unstrument `foo)" ['your.spec/foo]
+               "(foo :a)" :a
+               )
+             (done))))
+
+(deftest test-eval-require-cljsjs
+  "eval with namespaces"
+  (async done
+         (go (are [input-clj output-clj]
+                 (b= (<! (the-eval input-clj)) [:ok output-clj])
+               "(ns my.ns)
+          (require '[cljsjs.react])" nil
+
+               )
+             (done))))
 
 
 (deftest test-eval-spec-errors
   "eval with expected failures related to spec"
   (async done
-    (go
-      (are [input-clj]
-        (= :error (first (<! (the-eval input-clj))))
-        "(require '[clojure.spec.alpha :as s]
+         (go
+           (are [input-clj]
+               (= :error (first (<! (the-eval input-clj))))
+             "(require '[clojure.spec.alpha :as s]
              '[cljs.spec.test.alpha :as stest]
              '[clojure.spec.gen.alpha :as gen])
          (defn foo [x] x)
         (s/fdef foo :args (s/cat :x ::x)
                 :ret string?)
          (stest/instrument `foo) (foo :a)")
-      (done))))
+           (done))))
 
 (deftest test-eval-4
   "eval with types"

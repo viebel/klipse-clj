@@ -124,7 +124,7 @@
 (defn cached-ns-root []
   (:cached_ns_root *klipse-settings* "https://viebel.github.io/cljs-analysis-cache/cache/"))
 
-(defn load-ns-from-cache [name src-cb macro?]
+(defn load-ns-from-cache [name src-cb macro? on-failure-cb]
   (when *verbose?* (js/console.info "load-ns-from-cache:" (str name) "macro: " macro?))
   (go
     (let [nn (name->cached-resource name)
@@ -137,7 +137,7 @@
       (if (every? #(= 200 %) [(:status cache) (:status src)])
         (do
           (src-cb {:lang :js :cache (edn (:body cache)) :source (:body src)}))
-        (src-cb nil)))))
+        (on-failure-cb)))))
 
 
 (defn load-ns-from-file [st ns-sym filename]
@@ -162,23 +162,24 @@
 (defn cached-cljs-ns? [name]
   (re-matches (cached-ns-regexp) (str name)))
 
-(defmethod load-ns :macro [external-libs {:keys [name path]} src-cb-original]
-  (let [src-cb (if (not= name 'cljs.spec.test.alpha)
+(defmethod load-ns :macro [external-libs {:keys [name path try-cache?] :as args  :or {try-cache? true}} src-cb-original]
+  (let [load-ns-skip-cache #(load-ns external-libs (assoc args :try-cache? false) src-cb-original)
+        src-cb (if (not= name 'cljs.spec.test.alpha)
                  src-cb-original
                  (fn [& args]
                    (when *verbose?*
                      (js/console.info "src-cb: patch cljs.spec.test.alpha/eval"))
                    (apply src-cb-original args)
                    (def-a-var 'cljs.spec.test.alpha$macros 'eval 'identity) ; The spec.test.alpha/instrument macro uses eval, which doesn’t exist in ClojureScript. It seems that `identity` as eval works
-))]
+                   ))]
     (when *verbose?* (js/console.info "load-ns :macro :" (str name)))
     (cond
       (skip-ns-macros name) (do
                               (when *verbose?* (js/console.info "load-ns :macro skipping:" (str name)))
                               (src-cb {:lang :clj :source ""}))
-      (cached-macro-ns? name) (do
-                                (when *verbose?* (js/console.info "load-ns :macro cached:" (str name)))
-                                (load-ns-from-cache name src-cb true))
+      (and try-cache? (cached-macro-ns? name)) (do
+                                                 (when *verbose?* (js/console.info "load-ns :macro cached:" (str name)))
+                                                 (load-ns-from-cache name src-cb true load-ns-skip-cache))
       (the-ns-map name) (do
                           (when *verbose?* (js/console.info "load-ns :macro known:" (str name)))
                           (let [prefix (str (the-ns-map name) "/" path)
@@ -260,36 +261,37 @@
       (try-to-load-ns full-names :js :source src-cb))))
 
 
-(defmethod load-ns :cljs [external-libs {:keys [name path]} src-cb]
+(defmethod load-ns :cljs [external-libs {:keys [name path try-cache?] :as args :or {try-cache? true}} src-cb]
   (when *verbose?* (js/console.info "load-ns :cljs :" (str name) "external-libs: " external-libs))
-  (cond
-    (skip-ns-cljs name) (do
-                          (when *verbose?* (js/console.info "load-ns :cljs skipping" (str name)))
-                          (src-cb {:lang :js :source ""}))
-    (bundled-ns? name) (let [_ (when *verbose?* (js/console.log "load-ns :cljs bundled" name))
-                             filenames (map #(str (bundled-ns-root) path % ".cache.json") cljs-suffixes)]
-                         (go
-                           (when-not (<! (try-to-load-ns filenames :js :cache src-cb :transform edn :can-recover? true))
-                             ; sometimes it's a javascript namespace that is cached e.g com.cognitect.transit from transit-js
-                             (src-cb {:lang :js :source ""}))))
-    (cached-cljs-ns? name) (load-ns-from-cache name src-cb false)
-    (cljsjs? name) (try-to-load-cljsjs-ns name src-cb)
-    (the-ns-map name) (let [prefix (str (the-ns-map name) "/" path)
-                            filenames (map (partial str prefix) cljs-suffixes)]
-                        (when *verbose?* (js/console.info "load-ns :cljs from external libs" (str name)))
-                        (go
-                          (when-not
-                            (<! (try-to-load-ns filenames :clj :source src-cb :can-recover? true))
-                            (try-to-load-ns (str prefix ".js") :js :source src-cb))))
-    (seq external-libs) (let [filenames (external-libs-files external-libs cljs-suffixes path)]
+  (let [load-ns-skip-cache #(load-ns external-libs (assoc args :try-cache? false) src-cb)]
+    (cond
+      (skip-ns-cljs name) (do
+                            (when *verbose?* (js/console.info "load-ns :cljs skipping" (str name)))
+                            (src-cb {:lang :js :source ""}))
+      (bundled-ns? name) (let [_ (when *verbose?* (js/console.log "load-ns :cljs bundled" name))
+                               filenames (map #(str (bundled-ns-root) path % ".cache.json") cljs-suffixes)]
+                           (go
+                             (when-not (<! (try-to-load-ns filenames :js :cache src-cb :transform edn :can-recover? true))
+                                        ; sometimes it's a javascript namespace that is cached e.g com.cognitect.transit from transit-js
+                               (src-cb {:lang :js :source ""}))))
+      (and try-cache? (cached-cljs-ns? name)) (load-ns-from-cache name src-cb false load-ns-skip-cache)
+      (cljsjs? name) (try-to-load-cljsjs-ns name src-cb)
+      (the-ns-map name) (let [prefix (str (the-ns-map name) "/" path)
+                              filenames (map (partial str prefix) cljs-suffixes)]
+                          (when *verbose?* (js/console.info "load-ns :cljs from external libs" (str name)))
                           (go
                             (when-not
-                              (<! (try-to-load-ns filenames :clj :source src-cb :can-recover? true))
-                              (let [filenames (external-libs-files external-libs [".js"] path)]
-                                (try-to-load-ns filenames :js :source src-cb)))))
-    :else (do
-            (when *verbose?* (js/console.info "load-ns :cljs nothing can be done" (str name)))
-            (src-cb nil))))
+                                (<! (try-to-load-ns filenames :clj :source src-cb :can-recover? true))
+                              (try-to-load-ns (str prefix ".js") :js :source src-cb))))
+      (seq external-libs) (let [filenames (external-libs-files external-libs cljs-suffixes path)]
+                            (go
+                              (when-not
+                                  (<! (try-to-load-ns filenames :clj :source src-cb :can-recover? true))
+                                (let [filenames (external-libs-files external-libs [".js"] path)]
+                                  (try-to-load-ns filenames :js :source src-cb)))))
+      :else (do
+              (when *verbose?* (js/console.info "load-ns :cljs nothing can be done" (str name)))
+              (src-cb nil)))))
 
 (defn fix-goog-path [path]; https://github.com/oakes/eval-soup/blob/master/src/eval_soup/core.cljs
   ; goog/string -> goog/string/string
