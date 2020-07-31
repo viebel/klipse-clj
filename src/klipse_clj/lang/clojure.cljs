@@ -142,7 +142,7 @@
                      {:eval       eval-for-compilation
                       :ns         @ns
                       :static-fns static-fns
-                      :*compiler* (set! env/*compiler* st)
+                      :*compiler* (set! env/*compiler* st) ;; Setting env/*compiler* so that cljs.core/eval evaluates the code in `st`
                       :verbose    verbose?
                       :load       (partial io/load-ns external-libs)}
                         (fn [res]
