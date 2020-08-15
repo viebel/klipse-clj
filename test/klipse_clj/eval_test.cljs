@@ -140,19 +140,15 @@
              (done))))
 
 (deftest test-eval-require-cljsjs
-  "eval with namespaces"
   (async done
-         (go (are [input-clj output-clj]
-                 (b= (<! (the-eval input-clj)) [:ok output-clj])
-               "(ns my.ns)
-          (require '[cljsjs.react])" nil
-
-               )
+         (go
+           (are [input-clj output-clj]
+               (b= (<! (the-eval input-clj)) [:ok output-clj])
+             "(ns my.ns) (require '[cljsjs.react])" nil
+             "(some? js/React)" true)
              (done))))
 
-
 (deftest test-eval-spec-errors
-  "eval with expected failures related to spec"
   (async done
          (go
            (are [input-clj]
@@ -166,8 +162,7 @@
          (stest/instrument `foo) (foo :a)")
            (done))))
 
-(deftest test-eval-4
-  "eval with types"
+(deftest test-eval-with-types-4
   (async done
     (go (are [input-clj output-clj]
           (a= (str (second (<! (the-eval input-clj)))) output-clj)

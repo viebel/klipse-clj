@@ -1,12 +1,10 @@
 (ns klipse-clj.lang.clojure.io
   (:require-macros [gadjett.core :refer [dbg]]
-                   [cljs.core.async.macros :refer [go go-loop]])
+                   [cljs.core.async.macros :refer [go]])
   (:require
    [cljs.js :as cljs]
-   [clojure.string :as s]
+   [clojure.string :as s :refer [join split lower-case]]
    [klipse-clj.repl :refer [def-a-var]]
-   [clojure.walk :as ww]
-   [clojure.string :as string :refer [join split lower-case]]
    [cljs-http.client :as http]
    [cljs-http.util :refer [transit-decode]]
    [cljs.core.async :refer [<!]]
@@ -48,13 +46,13 @@
 
     If the resource could not be resolved, the callback should be invoked with
     nil."
-  (fn [_ {:keys [name macros path]} src-cb]
+  (fn [_ {:keys [name macros path]} _src-cb]
                     [name macros path]
                   (cond
                     macros :macro
                     (re-matches #"^goog\..*" (str name)) :goog
                     (re-matches #".*\.gist-.*" (str name)) :gist
-                    :default :cljs)))
+                    :else :cljs)))
 
 ;https://github.com/clojure/clojurescript/blob/master/src/test/self/self_parity/test.cljs#L166
 ;Indicates namespaces that we either don't need to load,
@@ -92,7 +90,7 @@
   Returns :success if a nampespace was loaded otherwise, returns nil.
   "
   [filenames lang src-key src-cb & {:keys [transform can-recover?] :or {transform identity can-recover? false}}]
-  (when *verbose?* (js/console.info "try-to-load-ns " filenames lang src-key))
+  (when *verbose?* (js/console.info "try-to-load-ns " filenames (str lang) (str src-key)))
   (go
     (if
       (loop [filenames filenames]
@@ -100,9 +98,14 @@
           (let [filename (first filenames)
                 {:keys [status body]} (<! (http/get (filename-of filename) {:with-credentials? false}))]
             (if (= 200 status)
-              (do (src-cb {:lang lang src-key (transform body) :file filename})
+              (do
+                (when *verbose?*
+                  (js/console.info "file loaded successfully" (str lang) (str src-key) filename))
+                (src-cb {:lang lang
+                         src-key (transform body)
+                         :file filename})
                   :success)
-              (do (recur (rest filenames)))))))
+              (recur (rest filenames))))))
       :success
       (do (when-not can-recover?
             (src-cb nil))
@@ -119,7 +122,7 @@
 
 (defn name->cached-resource [name]
   (-> (str (munge name))
-      (string/replace #"\." "_SLASH_")))
+      (s/replace #"\." "_SLASH_")))
 
 (defn cached-ns-root []
   (:cached_ns_root *klipse-settings* "https://viebel.github.io/cljs-analysis-cache/cache/"))
@@ -135,8 +138,7 @@
           src (<! (http/get (filename-of src-filename) {:with-credentials? false}))
           cache (<! (http/get (filename-of cache-filename) {:with-credentials? false}))]
       (if (every? #(= 200 %) [(:status cache) (:status src)])
-        (do
-          (src-cb {:lang :js :cache (edn (:body cache)) :source (:body src)}))
+        (src-cb {:lang :js :cache (edn (:body cache)) :source (:body src)})
         (on-failure-cb)))))
 
 
@@ -196,8 +198,8 @@
                     "https://viebel.github.io/klipse-clj/target/public/cljs-out/dev/"
                     #_"cljs-out/dev/" ))
 
-(defmethod load-ns :gist [external-libs {:keys [path]} src-cb]
-  (let [path (string/replace path #"gist_" "")
+(defmethod load-ns :gist [_external-libs {:keys [path]} src-cb]
+  (let [path (s/replace path #"gist_" "")
         filenames (map #(str "https://gist.githubusercontent.com/" path %) cljs-suffixes)]
     (try-to-load-ns filenames :clj :source src-cb)))
 
@@ -243,7 +245,7 @@
   For that, we have to convert the package name into a full path - hosted on this git repo: https://github.com/viebel/cljsjs-hosted
   "
   [name src-cb]
-  (when *verbose?* (js/console.log "load-ns :cljs try-to-load-cljsjs-ns" name))
+  (when *verbose?* (js/console.log "load-ns :cljs try-to-load-cljsjs-ns" (str name)))
   (if (bundled-cljsjs-ns? name)
     (do
       (when *verbose?*
@@ -265,7 +267,7 @@
       (skip-ns-cljs name) (do
                             (when *verbose?* (js/console.info "load-ns :cljs skipping" (str name)))
                             (src-cb {:lang :js :source ""}))
-      (bundled-ns? name) (let [_ (when *verbose?* (js/console.log "load-ns :cljs bundled" name))
+      (bundled-ns? name) (let [_ (when *verbose?* (js/console.log "load-ns :cljs bundled" (str name)))
                                filenames (map #(str (bundled-ns-root) path % ".cache.json") cljs-suffixes)]
                            (go
                              (when-not (<! (try-to-load-ns filenames :js :cache src-cb :transform edn :can-recover? true))
@@ -312,7 +314,7 @@
 (defn another-goog-path [path]
   ; goog/string/format -> goog/string/stringformat
   (let [parts (split path #"/")
-        last-part (last parts)
+        _last-part (last parts)
         new-parts (concat
                     (butlast parts)
                     [(join "" (take-last 2 parts))])]
