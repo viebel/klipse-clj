@@ -1,0 +1,9 @@
+{:optimizations :simple
+ :output-dir "resources/public/js"
+ :modules {:klipse-bundle
+           {:output-to "resources/public/js/klipse_bundle.js"
+            :entries #{"klipse.bundle"}}
+           :landing
+           {:output-to "resources/public/js/datascript_bundle.js"
+            :entries #{"datascript.core"}
+            :depends-on #{:klipse-bundle}}}}
