@@ -1,0 +1,8 @@
+{:optimizations :simple
+ :modules {:klipse-bundle
+           {:output-to "klipse_bundle.js"
+            :entries #{"klipse-bundle.bundle"}}
+           :landing
+           {:output-to "LIBRARY_BUNDLE"
+            :entries #{"NAMESPACE"}
+            :depends-on #{:klipse-bundle}}}}

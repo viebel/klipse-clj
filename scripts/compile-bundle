@@ -1,0 +1,43 @@
+#!/bin/bash
+
+OWNER=$1
+LIB=$2
+VERSION=$3
+NAMESPACE=$4
+BUILD=$5
+
+LIBRARY_BUNDLE=${LIB}_${VERSION}_klipse_bundle.js
+LIBRARY_URI=https://github.com/$OWNER/$LIB/archive/$VERSION.zip
+LIBRARY_FOLDER=/tmp/${LIB}-${VERSION}
+
+echo "Compiling Klipse compatible Javascript bundle for OWNER=$OWNER LIB=$LIB VERSION=$VERSION NAMESPACE=$NAMESPACE BUILD=$BUILD into a single file: ${LIBRARY_BUNDLE}"
+echo "Downloading library code from ${LIBRARY_URI} into folder ${LIBRARY_FOLDER}"
+cd /tmp
+wget -q ${LIBRARY_URI} -O /tmp/${LIB}-${VERSION}.zip
+rm -rf ${LIBRARY_FOLDER}
+unzip -oq ${LIB}-${VERSION}.zip
+cd -
+
+echo "Copying Klipse files into the library folder: ${LIBRARY_FOLDER}"
+cp build-for-klipse.template.edn  ${LIBRARY_FOLDER}
+mkdir ${LIBRARY_FOLDER}/src/klipse_bundle
+cp bundle.cljs ${LIBRARY_FOLDER}/src/klipse_bundle
+cd ${LIBRARY_FOLDER}
+sed "s/NAMESPACE/${NAMESPACE}/;s/LIBRARY_BUNDLE/${LIBRARY_BUNDLE}/" build-for-klipse.template.edn > build-for-klipse.edn
+echo "Generated compile options: "
+cat build-for-klipse.edn
+
+if [ $BUILD = "lein" ]; then
+  echo "Compiling with Leiningen"
+  set -x
+  lein update-in :source-paths conj \"src\" -- update-in :dependencies conj \[org.clojure/clojure\ \"1.10.1\"\] -- update-in :dependencies conj \[org.clojure/clojurescript\ \"1.10.520\"\] -- run -m cljs.main --compile-opts build-for-klipse.edn --compile klipse-bundle.bundle
+  set +x
+else
+  echo "Compiling with Clojure CLI"
+  set -x
+  clj -Sdeps '{:extra-paths ["src"] :deps {org.clojure/clojure {:mvn/version "1.10.1"} org.clojure/clojurescript {:mvn/version "1.10.520"}}}' --main cljs.main --compile-opts build-for-klipse.edn --compile klipse-bundle.bundle
+  set +x
+fi
+
+echo "Your bundle is here: ${LIBRARY_FOLDER}/${LIBRARY_BUNDLE}"
+cd -
