@@ -9,7 +9,7 @@
     [gadjett.core :as gadjett :refer [dbg]]
     [cljs.core.async.macros :refer [go go-loop]])
   (:require
-    [cljs.analyzer :as ana]
+    [cljs.analyzer.impl :as ana-impl]
     [clojure.string :as s :refer [starts-with?]]
     [cljs.compiler :refer [emits emit *source-map-data*]]
     [cljs.core.async :refer [timeout chan put! <!]]))
@@ -68,8 +68,8 @@
   (doseq [x xs]
     (cond
      (nil? x) nil
-     (ana/cljs-map? x) (emit x)
-     (ana/cljs-seq? x) (apply my-emits max-eval-duration x); call my-emits recursively and not emits
+     (ana-impl/cljs-map? x) (emit x)
+     (ana-impl/cljs-seq? x) (apply my-emits max-eval-duration x); call my-emits recursively and not emits
      ^boolean (goog/isFunction x) (x)
      :else (let [s (print-str x)]
              (when-not (nil? *source-map-data*)
@@ -77,4 +77,3 @@
                  update-in [:gen-col] #(+ % (count s))))
              (print s))))
   nil)
-
