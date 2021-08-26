@@ -344,12 +344,17 @@
                     read-result))))
 
 (defn eval-and-callback
-  "to be called from javascript"
+  "to be called from JavaScript"
   ^{:export true}
   [s cb]
   (go (-> (<! (the-eval s))
           clj->js
           cb)))
+
+(comment
+  (eval-and-callback "(map inc [1 2 3])"
+                     (fn [res]
+                       (def res res))))
 
 (defn str-compile "useful for testing and js export"
   ^{:export true}
@@ -396,6 +401,7 @@
   (js/console.log "main"))
 
 (comment
+  (+ 1 2 3)
   (enable-console-print!)
   (go (<! (create-state-eval))
       (println "init done"))

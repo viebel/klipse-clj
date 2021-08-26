@@ -2,6 +2,7 @@
   (:require-macros [gadjett.core :refer [dbg]]
                    [cljs.core.async.macros :refer [go]])
   (:require
+   ["xhr2" :as xhr2]
    [cljs.js :as cljs]
    [clojure.string :as s :refer [join split lower-case]]
    [klipse-clj.repl :refer [def-a-var]]
@@ -9,6 +10,8 @@
    [cljs-http.util :refer [transit-decode]]
    [cljs.core.async :refer [<!]]
    [applied-science.js-interop :as j]))
+
+(set! js/XMLHttpRequest xhr2) ;; See https://github.com/r0man/cljs-http/issues/94#issuecomment-426442569
 
 (def ^:dynamic *klipse-settings* {})
 (def ^:dynamic *verbose?* false)

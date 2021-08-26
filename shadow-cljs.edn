@@ -1,11 +1,17 @@
 {:source-paths ["src" "test"]
  :dev-http     {8081 "resources/public"}
  :nrepl        {:port 3333}
- :builds {
-          :test {:modules {:test-main {:entries [klipse-clj.test-runner]}}
-                 :output-dir "target/public/cljs-out"
-                 :target :browser
-                 :compiler-options {:optimizations :none}
-                 }
-          }
-}
+ :builds       {:npm     {:target    :node-library
+                          :output-to "target/public/node-library/klipse_clj.js"
+                          :exports   {:eval    klipse-clj.lang.clojure/the-eval
+                                      :eval_cb klipse-clj.lang.clojure/eval-and-callback
+                                      :compile klipse-clj.lang.clojure/str-compile}}
+                :browser {:modules          {:main {:entries [klipse-clj.lang.clojure]}}
+                          :output-dir       "resources/public/cljs-out"
+                          :target           :browser
+                          :release          {:compiler-options {:optimizations :advanced}}
+                          :compiler-options {:optimizations :none}}
+                :test    {:modules          {:test-main {:entries [klipse-clj.test-runner]}}
+                          :output-dir       "resources/public/cljs-out-test"
+                          :target           :browser
+                          :compiler-options {:optimizations :none}}}}

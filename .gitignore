@@ -12,3 +12,5 @@ figwheel_server.log
 .nrepl-port
 pom.xml
 pom.xml.asc
+resources/public/cljs-out-test/
+.shadow-cljs/
