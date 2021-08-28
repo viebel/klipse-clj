@@ -130,9 +130,9 @@
               (advanced-compile value))]
     [status res]))
 
-(defn my-eval [{:keys [file source file lang name path cache] :as args}]
+(defn my-eval [{:keys [file source file lang name path cache]}]
   (watchdog)
-  (cljs/js-eval args))
+  (js/eval source))
 
 (defn eval-for-compilation [{:keys [source]}]
   source)
