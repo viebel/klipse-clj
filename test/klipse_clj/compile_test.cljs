@@ -6,12 +6,14 @@
     [cljs.core.async :refer [<!]]
     [clojure.string :as string]
     [klipse-clj.repl :refer [reset-state-compile! reset-ns-compile!]]
-    [klipse-clj.lang.clojure :refer [str-compile]]))
+    [klipse-clj.lang.clojure :refer [str-compile create-state-eval]]))
 
 (use-fixtures :each
-              {:before (fn []
-                         (reset-state-compile!)
-                         (reset-ns-compile!))})
+              {:before #(async done
+                          (go (reset-state-compile!)
+                              (reset-ns-compile!)
+                              (<! (create-state-eval))
+                              (done)))})
 
 (defn remove-chars [s]
   (try
@@ -67,4 +69,3 @@
                  (a= (second (<! (str-compile input {:static-fns true}))) output)
                "(= 1 2)" "cljs.core._EQ_.cljs$core$IFn$_invoke$arity$2((1),(2));")
              (done))))
-

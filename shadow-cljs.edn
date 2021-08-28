@@ -1,0 +1,11 @@
+{:source-paths ["src" "test"]
+ :dev-http     {8081 "resources/public"}
+ :nrepl        {:port 3333}
+ :builds {
+          :test {:modules {:test-main {:entries [klipse-clj.test-runner]}}
+                 :output-dir "target/public/cljs-out"
+                 :target :browser
+                 :compiler-options {:optimizations :none}
+                 }
+          }
+}

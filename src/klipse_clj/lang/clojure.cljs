@@ -26,12 +26,23 @@
 (declare core-eval-an-exp)
 
 
-(defn load-core-macros-cache []
-  (io/load-ns-from-file @st 'cljs.core$macros (str (io/bundled-ns-root) "/cljs/core$macros.cljc.cache.json")))
+(defn load-core-cache []
+  (js/eval "goog.isString = function(val) {return typeof val == 'string';};")
+  (js/eval "goog.isFunction = function(val) {return typeof val == 'function';};")
+  (go
+    (let [core-macros-loaded (io/load-ns-from-cache 'cljs.core (fn [res]
+                                                            (js/goog.globalEval (:source res))
+                                                            (cljs/load-analysis-cache! @st 'cljs.core$macros (:cache res))
+                                                            ) true nil)
+          core-loaded        (io/load-ns-from-cache 'cljs.core (fn [res]
+                                                                 (cljs/load-analysis-cache! @st 'cljs.core (:cache res))
+                                                                 ) false nil)]
+         (<! core-macros-loaded)
+         (<! core-loaded))))
 
 (defn init-custom-macros []
   (go
-    (<! (load-core-macros-cache))
+    (<! (load-core-cache))
     (doseq [my-macros ["(require '[klipse-clj.repl :refer-macros [doc]])"
                        "(require-macros '[klipse-clj.macros :refer [dbg inferred-type]])"]]
       (<! (first (core-eval-an-exp my-macros {:st @st :ns current-ns-eval}))))))
@@ -119,9 +130,9 @@
               (advanced-compile value))]
     [status res]))
 
-(defn my-eval [{:keys [file source file lang name path cache] :as args}]
+(defn my-eval [{:keys [file source file lang name path cache]}]
   (watchdog)
-  (cljs/js-eval args))
+  (js/eval source))
 
 (defn eval-for-compilation [{:keys [source]}]
   source)
@@ -191,7 +202,7 @@
                          (go
                            (let [warnings (<! (read-until-closed! warnings-chan))]
                              (update-current-ns res verbose? ns)
-                             (put! res-chan res)                           
+                             (put! res-chan res)
                              (put! agg-warnings-chan (s/join "" warnings))))))
         [res-chan agg-warnings-chan]))))
 
@@ -405,5 +416,3 @@
   bbb
   (println 99)
   )
-
-
