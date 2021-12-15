@@ -46,7 +46,7 @@
 
 (defn eval-form
   ([form]
-   (eval-form (.-name *ns*)))
+   (eval-form form (.-name *ns*)))
   ([form ns]
    (let [result (atom nil)]
      (cljs/eval @st form
@@ -87,7 +87,7 @@
       (ana/resolve-macro-var env sym))))
 
 (defn- print-value
-  [value opts]
+  [value _opts]
   ;; TODO: find a better implementaion - look at planck.repl
   (prn value))
 

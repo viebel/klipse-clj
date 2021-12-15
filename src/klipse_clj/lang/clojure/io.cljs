@@ -1,6 +1,5 @@
 (ns klipse-clj.lang.clojure.io
-  (:require-macros [gadjett.core :refer [dbg]]
-                   [cljs.core.async.macros :refer [go]])
+  (:require-macros [cljs.core.async.macros :refer [go]])
   (:require
    [cljs.js :as cljs]
    [clojure.string :as s :refer [join split lower-case]]

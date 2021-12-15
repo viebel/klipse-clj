@@ -1,26 +1,24 @@
 (ns klipse-clj.lang.clojure
   (:require-macros
-    [gadjett.core :refer [dbg]]
     [cljs.core.async.macros :refer [go go-loop]])
   (:require
     klipse-clj.lang.clojure.bundled-namespaces
     gadjett.core-fn
     [cljs.tagged-literals :as tags]
     [goog.dom :as gdom]
-    [clojure.string :refer [blank?]]
-    [klipse-clj.repl :refer [get-completions current-alias-map st create-state-compile current-ns-eval current-ns-compile reset-ns-eval! reset-ns-compile!]]
-    [klipse-clj.lang.clojure.guard :refer [min-max-eval-duration my-emits watchdog]]
+    [clojure.string :as s :refer [blank?]]
+    [klipse-clj.lang.clojure.guard :refer [watchdog]]
+    [klipse-clj.repl :refer [get-completions current-alias-map st create-state-compile current-ns-eval current-ns-compile]]
     [klipse-clj.lang.clojure.io :as io]
     [clojure.pprint :as pprint]
     [cljs.analyzer :as ana]
     [klipse-clj.lang.cljs-repl :refer [error->str]] ;; once error->str is in cljs, take it from there
     [cljs.tools.reader :as r]
     [cljs.tools.reader.reader-types :as rt]
-    [clojure.string :as s]
-    [cljs.compiler :as compiler]
-    [cljs.core.async :refer [timeout chan close! put! <!]]
+    [cljs.core.async :refer [chan close! put! <!]]
     [cljs.env :as env]
-    [cljs.js :as cljs]))
+    [cljs.js :as cljs]
+    [cljs.compiler :as compiler]))
 
 
 (declare core-eval-an-exp)
@@ -79,25 +77,24 @@
                                     (ex-info (str e)
                                              #:clojure.error{:phase :print-eval-result})))])))
 
-(defn update-current-ns [{:keys [ns form warning error value success?]} verbose? current-ns]
+(defn update-current-ns [{:keys [ns _form _warning error _value _success?]} verbose? current-ns]
   (when-not error
     (when verbose? (js/console.info "update-current-ns:" (str ns)))
     (reset! current-ns ns)))
 
-(defn result-as-str [{:keys [ns form warning error value success?] :as args} opts]
-  (let [status (if error :error :ok)]
-    (if-not error
+(defn result-as-str [{:keys [_ns _form _warning error value _success?] :as args} opts]
+  (if-not error
       (display value opts)
-      [:error (display-err error)])))
+      [:error (display-err error)]))
 
-(defn result-as-prepl-map [form-str {:keys [ns form warning error value success?] :as args} opts]
+(defn result-as-prepl-map [form-str {:keys [ns _form _warning _error _value _success?] :as args} opts]
   (let [[status val] (result-as-str args opts)]
     {:tag (if (= :error status) :err :ret)
      :ns ns
      :val val
      :form form-str}))
 
-(defn read-result [{:keys [form warning error value success?]}]
+(defn read-result [{:keys [_form _warning error value _success?]}]
   (let [status (if error :error :ok)
         res (if-not error
               value
@@ -119,7 +116,7 @@
               (advanced-compile value))]
     [status res]))
 
-(defn my-eval [{:keys [file source file lang name path cache] :as args}]
+(defn my-eval [{:keys [_file _source _file _lang _name _path _cache] :as args}]
   (watchdog)
   (cljs/js-eval args))
 
@@ -127,16 +124,13 @@
   source)
 
 ; store the original compiler/emits - as I'm afraid things might get wrong with all the with-redefs (especially with core.async. See http://dev.clojure.org/jira/browse/CLJS-1634
-(def original-emits compiler/emits)
+ #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
+ (def original-emits compiler/emits)
 
-(defn core-compile-an-exp [s {:keys [static-fns external-libs max-eval-duration compile-display-guard verbose? st ns]
-                              :or {static-fns false external-libs nil max-eval-duration min-max-eval-duration compile-display-guard false verbose? false st nil}}]
-  (let [c (chan)
-        max-eval-duration (max max-eval-duration min-max-eval-duration)
-        the-emits (if compile-display-guard (partial my-emits max-eval-duration) original-emits)]
-    (with-redefs [;compiler/emits the-emits
-                  ]
-      (cljs/eval-str st
+(defn core-compile-an-exp [s {:keys [static-fns external-libs verbose? st ns]
+                              :or {static-fns false external-libs nil verbose? false st nil}}]
+  (let [c (chan)]
+    (cljs/eval-str st
                      s
                      "compile.klipse"
                      {:eval       eval-for-compilation
@@ -147,7 +141,7 @@
                       :load       (partial io/load-ns external-libs)}
                         (fn [res]
                           (update-current-ns res verbose? ns)
-                          (put! c res))))
+                          (put! c res)))
     c))
 
 
@@ -166,11 +160,10 @@
           (recur (conj res x)))))
     d))
 
-(defn core-eval-an-exp [s {:keys [static-fns external-libs max-eval-duration verbose? st ns] :or {static-fns false external-libs nil max-eval-duration min-max-eval-duration verbose? false st nil}}]
+(defn core-eval-an-exp [s {:keys [static-fns external-libs verbose? st ns] :or {static-fns false external-libs nil verbose? false st nil}}]
   (let [res-chan (chan)
         warnings-chan (chan 1024)
-        agg-warnings-chan (chan )
-        max-eval-duration (max max-eval-duration min-max-eval-duration)]
+        agg-warnings-chan (chan )]
     (binding [ana/*cljs-warning-handlers* [(partial warning-handler warnings-chan)]]
       (with-redefs [;compiler/emits (partial my-emits max-eval-duration) ;; TODO Dec 19 2018 - it breaks simple compilation
                     ]
@@ -259,6 +252,7 @@
   err)
 
 
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (def completions get-completions)
 
 (defn core-eval [s opts]
@@ -270,7 +264,7 @@
         (loop [[exp rest-exps]  (first-exp-and-rest s @st @current-ns-eval)
                last-res nil
                warnings ""]
-          (if (not (empty? exp))
+          (if (seq exp)
             (let [[c d] (core-eval-an-exp exp (assoc opts :st @st :ns current-ns-eval))
                   res (<! c)]
               (if (:error res)
@@ -296,7 +290,7 @@
     (try
       (loop [[exp rest-exps] (first-exp-and-rest s (create-state-compile) @current-ns-compile)
              all-res ""]
-        (if (not (empty? exp))
+        (if (seq exp)
           (let [res (<! (core-compile-an-exp exp (assoc opts :st (create-state-compile) :ns current-ns-compile)))]
             (if (:error res)
               res
@@ -317,6 +311,7 @@
       :res res-str})))
 
 
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn eval-async [s opts]
   (go
     (let [[res-chan warnings-chan] (core-eval s opts)
@@ -332,6 +327,7 @@
   ([s opts] (go (-> (<! (first (core-eval s opts)))
                     read-result))))
 
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn eval-and-callback
   "to be called from javascript"
   ^{:export true}
@@ -350,11 +346,13 @@
   (go (-> (<! (core-compile exp opts))
           (convert-compile-res))))
 
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn str-compile-async [exp opts]
   (go (-> (<! (compile-async exp opts))
           second
           str)))
 
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn str-eval-async [exp {:keys [container-id setup-container-fn verbose?] :as opts}]
   (let [c (chan)]
     (when verbose? (js/console.info "[clojure] evaluating" exp))
@@ -380,9 +378,6 @@
         (as-> (<! (first (core-eval s opts))) $
               (put! c (result-as-prepl-map s $ opts)))))
      c)))
-
-(defn main []
-  (js/console.log "main"))
 
 (comment
   (enable-console-print!)

@@ -6,13 +6,11 @@
   and this doesn't kill go-loops created by users' snippet code, because those go-loops won't block the watchdog from running.
   "
   (:require-macros
-    [gadjett.core :as gadjett :refer [dbg]]
-    [cljs.core.async.macros :refer [go go-loop]])
+    [cljs.core.async.macros :refer [go-loop]])
   (:require
     [cljs.analyzer :as ana]
-    [clojure.string :as s :refer [starts-with?]]
-    [cljs.compiler :refer [emits emit *source-map-data*]]
-    [cljs.core.async :refer [timeout chan put! <!]]))
+    [cljs.compiler :refer [emit *source-map-data*]]
+    [cljs.core.async :refer [timeout <!]]))
 
 (def ^{:doc "each time the watchdog has a chance to run, this var is set with the current time"
        :dynamic true}
