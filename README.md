@@ -16,5 +16,5 @@ clj  -A:figwheel -C:test  --build test --repl
 # Tests - CI
 
 ```bash
-clj -A:figwheel -m klipse.test-runner-ci
+clj -A:figwheel -m klipse-clj.test-runner-ci
 ```
