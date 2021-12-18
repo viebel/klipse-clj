@@ -1,0 +1,8 @@
+{:deps true
+ :dev-http {8001 "public"}
+ :builds {:bundle
+          {:target :browser
+           :output-dir "public/bundle"
+           :compiler-options {:optimizations :simple
+                              :output-wrapper false}
+           :modules {:main {:entries [klipse-clj.lang.clojure]}}}}}

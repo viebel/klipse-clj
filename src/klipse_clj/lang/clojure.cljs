@@ -394,7 +394,8 @@
             `(inc ~x))
             (hello nil nil 13)" {:verbose? false}))))
   (go (println (<! (the-eval "(inferred-type (if x 2 \"a\"))" {:verbose? true}))))
-  (go (println (<! (eval-async-map "(map inc [1 2 3])" {:verbose? true}))))
+  (go (def a (<! (eval-async-map "(map inc [1 2 3])" {:verbose? true}))))
+
   (go (println (<! (eval-async-map " (require '[lambdaisland.uri :refer [uri]] ) (uri \"http://google.com\")" {}))))
   (go (def a (<! (eval-async-prepl "(map inc [1 2 3])" {:print-length 1}))))
   (go (def b (<! (eval-async-prepl "(map inc [1 2 3)" {}))))
@@ -411,7 +412,7 @@
 
 
 (boot/init compile-state-ref
-    {:path  "http://localhost:8080/cache-shadow/out" #_"/bootstrap" #_"https://viebel.github.io/cljs-analysis-cache/cache/"}
+    {:path  #_"http://localhost:8080/cache-shadow/out" "/bootstrap" #_"https://viebel.github.io/cljs-analysis-cache/cache/"}
     #(println "boot"))
 
 
