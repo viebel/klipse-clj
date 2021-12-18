@@ -8,7 +8,7 @@
   (:require-macros
     [cljs.core.async.macros :refer [go-loop]])
   (:require
-    [cljs.analyzer :as ana]
+    [cljs.analyzer.impl :as ana]
     [cljs.compiler :refer [emit *source-map-data*]]
     [cljs.core.async :refer [timeout <!]]))
 

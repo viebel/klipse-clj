@@ -1,16 +1,17 @@
 (ns klipse-clj.lang.clojure.io
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require
-   [cljs.js :as cljs]
-   [clojure.string :as s :refer [join split lower-case]]
-   [klipse-clj.repl :refer [def-a-var]]
-   [cljs-http.client :as http]
-   [cljs-http.util :refer [transit-decode]]
-   [cljs.core.async :refer [<!]]
-   [applied-science.js-interop :as j]))
+    [cljs.js :as cljs]
+    [clojure.string :as s :refer [join split lower-case]]
+    [klipse-clj.repl :refer [def-a-var]]
+    [cljs-http.client :as http]
+    [cljs-http.util :refer [transit-decode]]
+    [clojure.core.async :refer [chan <! put!]]
+    [applied-science.js-interop :as j]
+    [shadow.cljs.bootstrap.browser :as boot]))
 
 (def ^:dynamic *klipse-settings* {})
-(def ^:dynamic *verbose?* false)
+(def ^:dynamic *verbose?* true)
 (def ^:dynamic *cache-buster?* false)
 
 (defn edn [json]
@@ -124,7 +125,16 @@
       (s/replace #"\." "_SLASH_")))
 
 (defn cached-ns-root []
-  (:cached_ns_root *klipse-settings* "https://viebel.github.io/cljs-analysis-cache/cache/"))
+  #_"http://localhost:8080/cache2" (:cached_ns_root *klipse-settings* "https://viebel.github.io/cljs-analysis-cache/cache/"))
+
+(defn boot-init [compile-state-ref]
+  (let [c (chan)]
+    (boot/init compile-state-ref
+               {:path "/bootstrap"}
+               (fn []
+                 (println "Bootstrapped!")
+                 (put! c :ok)))
+    c))
 
 (defn load-ns-from-cache [name src-cb macro? on-failure-cb]
   (when *verbose?* (js/console.info "load-ns-from-cache:" (str name) "macro: " macro?))

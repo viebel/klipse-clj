@@ -1,7 +1,7 @@
 (ns klipse-clj.lang.clojure
-  (:require-macros
-    [cljs.core.async.macros :refer [go go-loop]])
   (:require
+    [shadow.cljs.bootstrap.browser :as boot]
+    [cljs.core.async :refer [chan close! put! <! go go-loop]]
     klipse-clj.lang.clojure.bundled-namespaces
     gadjett.core-fn
     [cljs.tagged-literals :as tags]
@@ -15,14 +15,12 @@
     [klipse-clj.lang.cljs-repl :refer [error->str]] ;; once error->str is in cljs, take it from there
     [cljs.tools.reader :as r]
     [cljs.tools.reader.reader-types :as rt]
-    [cljs.core.async :refer [chan close! put! <!]]
     [cljs.env :as env]
     [cljs.js :as cljs]
     [cljs.compiler :as compiler]))
 
 
 (declare core-eval-an-exp)
-
 
 (defn load-core-macros-cache []
   (io/load-ns-from-file @st 'cljs.core$macros (str (io/bundled-ns-root) "/cljs/core$macros.cljc.cache.json")))
@@ -34,12 +32,17 @@
                        "(require-macros '[klipse-clj.macros :refer [dbg inferred-type]])"]]
       (<! (first (core-eval-an-exp my-macros {:st @st :ns current-ns-eval}))))))
 
+(comment
+  (reset! st nil)
+  (type @st))
+
 (defn create-state-eval []
   (if @st
     (go @st)
     (do
-      (reset! st (cljs/empty-state))
-      (init-custom-macros))))
+      (go (reset! st (env/default-compiler-env) #_(cljs/empty-state))
+          (<! (io/boot-init @st))
+          (init-custom-macros)))))
 
 (defn- reader-error?
   [e]
@@ -164,6 +167,7 @@
   (let [res-chan (chan)
         warnings-chan (chan 1024)
         agg-warnings-chan (chan )]
+    (println "Eval " s)
     (binding [ana/*cljs-warning-handlers* [(partial warning-handler warnings-chan)]]
       (with-redefs [;compiler/emits (partial my-emits max-eval-duration) ;; TODO Dec 19 2018 - it breaks simple compilation
                     ]
@@ -180,6 +184,7 @@
                         :static-fns    static-fns
                         :load          (partial io/load-ns external-libs)}
                        (fn [res]
+                         (println "Evaluated" s)
                          (close! warnings-chan)
                          (go
                            (let [warnings (<! (read-until-closed! warnings-chan))]
@@ -389,16 +394,38 @@
             `(inc ~x))
             (hello nil nil 13)" {:verbose? false}))))
   (go (println (<! (the-eval "(inferred-type (if x 2 \"a\"))" {:verbose? true}))))
-  (go (println (<! (eval-async-map "(map inc [1 2 3])" {}))))
+  (go (println (<! (eval-async-map "(map inc [1 2 3])" {:verbose? true}))))
+  (go (println (<! (eval-async-map " (require '[lambdaisland.uri :refer [uri]] ) (uri \"http://google.com\")" {}))))
   (go (def a (<! (eval-async-prepl "(map inc [1 2 3])" {:print-length 1}))))
-  a
   (go (def b (<! (eval-async-prepl "(map inc [1 2 3)" {}))))
-  b
 
   (def c (eval-async-prepl "(do (println (+ 1 2)) (println 87) 89)"))
   (go (def bbb (<! c)))
   bbb
   (println 99)
-  )
+  (= @@st
+     @compile-state-ref)
+  
 
 
+
+
+(boot/init compile-state-ref
+    {:path  "http://localhost:8080/cache-shadow/out" #_"/bootstrap" #_"https://viebel.github.io/cljs-analysis-cache/cache/"}
+    #(println "boot"))
+
+
+
+(compile-it "(require '[lambdaisland.uri :refer [uri]]) (uri \"http://google.com\")")
+(compile-it " (map inc [1 2 3]) ")
+)
+
+(defonce compile-state-ref (env/default-compiler-env))
+(defn compile-it [code]
+  (cljs/eval-str
+    compile-state-ref
+    code
+    "[test]"
+    {:eval cljs/js-eval
+     :load (partial boot/load compile-state-ref)}
+    println))

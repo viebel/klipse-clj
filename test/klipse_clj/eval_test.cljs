@@ -1,9 +1,8 @@
 (ns klipse-clj.eval-test
   (:require-macros
-    [gadjett.core :refer [dbg]]
     [cljs.core.async.macros :refer [go]])
   (:require
-    [cljs.test :refer [deftest is are async use-fixtures]]
+    [cljs.test :refer [deftest are async use-fixtures]]
     [klipse-clj.lang.clojure.io :refer [*klipse-settings* *verbose?*]]
     [klipse-clj.repl :refer [reset-state-eval! reset-ns-eval!]]
     [cljs.core.async :refer [<!]]
