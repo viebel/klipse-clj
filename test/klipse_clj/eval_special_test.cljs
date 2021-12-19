@@ -1,4 +1,4 @@
-(ns klipse-clj.eval_special_test
+(ns klipse-clj.eval-special-test
   (:require
     [cljs.test :refer [is are deftest]]
     [clojure.string :as string]

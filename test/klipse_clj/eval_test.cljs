@@ -71,7 +71,7 @@
   (async done
     (go (are [input-clj output-clj]
           (b= (<! (the-eval input-clj)) [:ok output-clj])
-          "(if (> 100 10) 1 2)" 1
+          "(if (> 100 10) 1 2)" 10990
           "(ns aa.cc) (def x 12)
           (+ x 5)" 17
           "(+ 1 2)" 3

@@ -1,6 +1,10 @@
 {:deps true
- :dev-http {8001 "public"}
- :builds {:bundle
+ :dev-http {8001 "public"
+            8002 "public/test"}
+ :builds {:test {:target :browser-test
+                 :runner-ns klipse-clj.test-runner
+                 :test-dir "public/test"}
+          :bundle
           {:target :browser
            :output-dir "public/bundle"
            :compiler-options {:optimizations :simple

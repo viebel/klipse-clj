@@ -23,7 +23,7 @@
 (declare core-eval-an-exp)
 
 (defn load-core-macros-cache []
-  (io/load-ns-from-file @st 'cljs.core$macros (str (io/bundled-ns-root) "/cljs/core$macros.cljc.cache.json")))
+  (io/load-ns-from-file @st 'cljs.core$macros (str (io/cached-ns-root) "cljs_SLASH_core$macros.cache.json")))
 
 (defn init-custom-macros []
   (go
@@ -39,10 +39,9 @@
 (defn create-state-eval []
   (if @st
     (go @st)
-    (do
-      (go (reset! st (env/default-compiler-env) #_(cljs/empty-state))
-          (<! (io/boot-init @st))
-          (init-custom-macros)))))
+    (go (reset! st (env/default-compiler-env) #_(cljs/empty-state))
+        (<! (io/boot-init @st))
+        (init-custom-macros))))
 
 (defn- reader-error?
   [e]
@@ -394,9 +393,9 @@
             `(inc ~x))
             (hello nil nil 13)" {:verbose? false}))))
   (go (println (<! (the-eval "(inferred-type (if x 2 \"a\"))" {:verbose? true}))))
-  (go (def a (<! (eval-async-map "(map inc [1 2 3])" {:verbose? true}))))
+  (go (<! (eval-async-map "(map inc [1 2 3])" {:verbose? true})))
 
-  (go (println (<! (eval-async-map " (require '[lambdaisland.uri :refer [uri]] ) (uri \"http://google.com\")" {}))))
+  (go (def ccc (<! (eval-async-map " (require '[lambdaisland.uri :refer [uri]] ) (uri \"http://google.com\")" {}))))
   (go (def a (<! (eval-async-prepl "(map inc [1 2 3])" {:print-length 1}))))
   (go (def b (<! (eval-async-prepl "(map inc [1 2 3)" {}))))
 
@@ -412,7 +411,7 @@
 
 
 (boot/init compile-state-ref
-    {:path  #_"http://localhost:8080/cache-shadow/out" "/bootstrap" #_"https://viebel.github.io/cljs-analysis-cache/cache/"}
+    {:path  #_"http://localhost:8080/cache-shadow/out" #_"/bootstrap" "https://viebel.github.io/cljs-analysis-cache/cache/"}
     #(println "boot"))
 
 

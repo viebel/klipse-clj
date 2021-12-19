@@ -130,7 +130,7 @@
 (defn boot-init [compile-state-ref]
   (let [c (chan)]
     (boot/init compile-state-ref
-               {:path  "/bootstrap"}
+               {:path  (:cached_shadow_ns_root *klipse-settings* "https://viebel.github.io/cljs-analysis-cache/cache-shadow/core-out/")}
                (fn []
                  (println "Bootstrapped!")
                  (put! c :ok)))
@@ -200,6 +200,13 @@
               (when *verbose?* (js/console.info "load-ns :macro external-libs:" (str name)))
               (let [filenames (external-libs-files external-libs macro-suffixes path)]
                 (try-to-load-ns filenames :clj :source src-cb))))))
+
+
+(defn bundled-ns-root []
+  (:bundled_ns_root *klipse-settings*
+                    #_"https://viebel.github.io/klipse-clj/target/public/cljs-out/dev/"
+                    "/bootstrap/ana"
+                    #_"cljs-out/dev/" ))
 
 (defmethod load-ns :gist [_external-libs {:keys [path]} src-cb]
   (let [path (s/replace path #"gist_" "")
