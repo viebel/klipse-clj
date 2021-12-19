@@ -23,7 +23,7 @@
 (declare core-eval-an-exp)
 
 (defn load-core-macros-cache []
-  (io/load-ns-from-file @st 'cljs.core$macros (str (io/cached-ns-root) "cljs_SLASH_core$macros.cache.json")))
+  (io/load-ns-from-file @st 'cljs.core$macros (str (io/cached-shadow-root) "ana/cljs.core$macros.transit.json")))
 
 (defn init-custom-macros []
   (go

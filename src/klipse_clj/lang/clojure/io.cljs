@@ -125,12 +125,15 @@
       (s/replace #"\." "_SLASH_")))
 
 (defn cached-ns-root []
-  #_"http://localhost:8080/cache2" (:cached_ns_root *klipse-settings* "https://viebel.github.io/cljs-analysis-cache/cache/"))
+   (:cached_ns_root *klipse-settings* "https://viebel.github.io/cljs-analysis-cache/cache/"))
+
+(defn cached-shadow-root []
+   (:cached_shadow_root *klipse-settings* "https://viebel.github.io/cljs-analysis-cache/cache-shadow/core-out/"))
 
 (defn boot-init [compile-state-ref]
   (let [c (chan)]
     (boot/init compile-state-ref
-               {:path  (:cached_shadow_ns_root *klipse-settings* "https://viebel.github.io/cljs-analysis-cache/cache-shadow/core-out/")}
+               {:path  (cached-shadow-root)}
                (fn []
                  (println "Bootstrapped!")
                  (put! c :ok)))
