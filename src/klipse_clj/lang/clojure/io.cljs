@@ -11,7 +11,7 @@
     [shadow.cljs.bootstrap.browser :as boot]))
 
 (def ^:dynamic *klipse-settings* {})
-(def ^:dynamic *verbose?* true)
+(def ^:dynamic *verbose?* false)
 (def ^:dynamic *cache-buster?* false)
 
 (defn edn [json]

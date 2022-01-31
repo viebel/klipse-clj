@@ -34,6 +34,10 @@
   (and (= status-a status-b)
        (a= a b)))
 
+(comment
+  (go (def aaa (<! (the-eval "(with-out-str (doc map))" ))))
+  (go (def aaa (<! (the-eval "(map inc [1 2 3])" ))))
+  )
 (deftest doc-test
   "doc macro"
   (async done

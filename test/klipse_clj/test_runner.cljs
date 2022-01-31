@@ -5,6 +5,7 @@
     [klipse-clj.compile-test]))
 
 (defn start []
+  (println "RUN TESTS")
   (run-tests 'klipse-clj.eval-test
              'klipse-clj.compile-test))
 

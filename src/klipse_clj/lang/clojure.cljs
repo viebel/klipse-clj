@@ -166,7 +166,6 @@
   (let [res-chan (chan)
         warnings-chan (chan 1024)
         agg-warnings-chan (chan )]
-    (println "Eval " s)
     (binding [ana/*cljs-warning-handlers* [(partial warning-handler warnings-chan)]]
       (with-redefs [;compiler/emits (partial my-emits max-eval-duration) ;; TODO Dec 19 2018 - it breaks simple compilation
                     ]
@@ -183,7 +182,6 @@
                         :static-fns    static-fns
                         :load          (partial io/load-ns external-libs)}
                        (fn [res]
-                         (println "Evaluated" s)
                          (close! warnings-chan)
                          (go
                            (let [warnings (<! (read-until-closed! warnings-chan))]
@@ -394,6 +392,7 @@
             (hello nil nil 13)" {:verbose? false}))))
   (go (println (<! (the-eval "(inferred-type (if x 2 \"a\"))" {:verbose? true}))))
   (go (<! (eval-async-map "(map inc [1 2 3])" {:verbose? true})))
+  (go (def ddd (<! (the-eval "(with-out-str (doc map))" {:verbose? false}))))
 
   (go (def ccc (<! (eval-async-map " (require '[lambdaisland.uri :refer [uri]] ) (uri \"http://google.com\")" {}))))
   (go (def a (<! (eval-async-prepl "(map inc [1 2 3])" {:print-length 1}))))
