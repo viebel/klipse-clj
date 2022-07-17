@@ -1,0 +1,5 @@
+^{:open-url "http://localhost:5016/standalone.html"
+  :watch-dirs ["src" ]}
+{:main klipse-clj.core
+ :optimizations :simple}
+

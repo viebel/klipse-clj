@@ -6,7 +6,7 @@
     gadjett.core-fn
     [cljs.tagged-literals :as tags]
     [goog.dom :as gdom]
-    [clojure.string :as s :refer [blank?]]
+    [clojure.string :as s :refer [trim-newline blank?]]
     [klipse-clj.lang.clojure.guard :refer [watchdog]]
     [klipse-clj.repl :refer [get-completions current-alias-map st create-state-compile current-ns-eval current-ns-compile]]
     [klipse-clj.lang.clojure.io :as io]
@@ -367,6 +367,30 @@
             (let [{:keys [warnings res]} (<! (eval-async-map exp opts))]
               (put! c (str warnings (second res))))))))
     c))
+
+(defn str-eval-prom 
+  "Returns a promise with the result of the evaluation of exp"
+  [exp {:keys [verbose] :as opts}]
+  (let [p (js/Promise.
+            (fn [resolve reject]
+              (when verbose
+                (js/console.info "[clojure] evaluating" exp))
+              (go
+                (if (blank? exp)
+                  (resolve "")
+                  (do
+                    (binding [*print-newline* false
+                              #_#_*print-fn* #(put! c %)]
+                      (let [{:keys [warnings res]} (<! (eval-async-map exp opts))]
+                        (if (= :error (first res))
+                          (reject (second res))
+                          (do
+                            (when warnings
+                              (js/console.warn warnings))
+                            (when verbose
+                              (js/console.info "[clojure] evaluated" exp))
+                            (resolve (trim-newline (second res))))))))))))]
+    p))
 
 (defn eval-async-prepl
   ([s] (eval-async-prepl s {}))
