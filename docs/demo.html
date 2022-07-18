@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>klispe-clj Standalone</title>
+</head>
+<body>
+    <script src="https://viebel.github.io/klipse-clj/klipse_clj.js"></script>
+    <script>
+klipse_clj.core.eval("(map inc [1 2 3])").then(res => document.getElementById("klipse-res").innerHTML = res)
+  </script>
+<h1> Klipse CLJ demo</h1>
+        <pre>
+            <code>
+klipse_clj.core.eval("(map inc [1 2 3])").then(res => document.getElementById("klipse-res").innerHTML = res)
+            </code>
+        </pre>
+<div id="klipse-res">Evaluating...</div>
+
+</body>
+</html>
+
