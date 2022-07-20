@@ -2,7 +2,7 @@
 classes
 *.iml
 out/
-target/
+target/stale
 node_modules
 .cpcache/
 .rebel_readline_history
