@@ -1,0 +1,1 @@
+{:main klipse-clj.core, :optimizations :simple, :output-to "target/public/cljs-out/standalone-main.js", :output-dir "target/public/cljs-out/standalone", :asset-path "/cljs-out/standalone", :aot-cache false}
