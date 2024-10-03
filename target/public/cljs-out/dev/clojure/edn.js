@@ -1,4 +1,4 @@
-// Compiled by ClojureScript 1.10.520 {}
+// Compiled by ClojureScript 1.11.132 {:optimizations :none}
 goog.provide('clojure.edn');
 goog.require('cljs.core');
 goog.require('cljs.reader');
@@ -21,8 +21,8 @@ goog.require('cljs.reader');
  *            be called with the tag and the value.
  */
 clojure.edn.read = (function clojure$edn$read(var_args){
-var G__20913 = arguments.length;
-switch (G__20913) {
+var G__32087 = arguments.length;
+switch (G__32087) {
 case 1:
 return clojure.edn.read.cljs$core$IFn$_invoke$arity$1((arguments[(0)]));
 
@@ -41,19 +41,19 @@ throw (new Error(["Invalid arity: ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(
 }
 });
 
-clojure.edn.read.cljs$core$IFn$_invoke$arity$1 = (function (reader){
+(clojure.edn.read.cljs$core$IFn$_invoke$arity$1 = (function (reader){
 return cljs.reader.read.call(null,reader);
-});
+}));
 
-clojure.edn.read.cljs$core$IFn$_invoke$arity$2 = (function (opts,reader){
+(clojure.edn.read.cljs$core$IFn$_invoke$arity$2 = (function (opts,reader){
 return cljs.reader.read.call(null,opts,reader);
-});
+}));
 
-clojure.edn.read.cljs$core$IFn$_invoke$arity$4 = (function (reader,eof_error_QMARK_,eof,opts){
+(clojure.edn.read.cljs$core$IFn$_invoke$arity$4 = (function (reader,eof_error_QMARK_,eof,opts){
 return cljs.reader.read.call(null,reader,eof_error_QMARK_,eof,opts);
-});
+}));
 
-clojure.edn.read.cljs$lang$maxFixedArity = 4;
+(clojure.edn.read.cljs$lang$maxFixedArity = 4);
 
 /**
  * Reads one object from the string s.
@@ -65,8 +65,8 @@ clojure.edn.read.cljs$lang$maxFixedArity = 4;
  * opts is a map as per cljs.tools.reader.edn/read
  */
 clojure.edn.read_string = (function clojure$edn$read_string(var_args){
-var G__20916 = arguments.length;
-switch (G__20916) {
+var G__32090 = arguments.length;
+switch (G__32090) {
 case 1:
 return clojure.edn.read_string.cljs$core$IFn$_invoke$arity$1((arguments[(0)]));
 
@@ -81,15 +81,15 @@ throw (new Error(["Invalid arity: ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(
 }
 });
 
-clojure.edn.read_string.cljs$core$IFn$_invoke$arity$1 = (function (s){
+(clojure.edn.read_string.cljs$core$IFn$_invoke$arity$1 = (function (s){
 return cljs.reader.read_string.call(null,s);
-});
+}));
 
-clojure.edn.read_string.cljs$core$IFn$_invoke$arity$2 = (function (opts,s){
+(clojure.edn.read_string.cljs$core$IFn$_invoke$arity$2 = (function (opts,s){
 return cljs.reader.read_string.call(null,opts,s);
-});
+}));
 
-clojure.edn.read_string.cljs$lang$maxFixedArity = 2;
+(clojure.edn.read_string.cljs$lang$maxFixedArity = 2);
 
 
 //# sourceMappingURL=edn.js.map

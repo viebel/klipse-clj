@@ -23,8 +23,7 @@
         [clojure.tools.reader.reader-types :as rtypes]        
         [figwheel.tools.exceptions :as fig-ex]]))
   #?(:cljs (:require-macros [figwheel.core]))
-  (:import #?@(:cljs [[goog]
-                      [goog.debug Console]
+  (:import #?@(:cljs [[goog.debug Console]
                       [goog.async Deferred]
                       [goog Promise]
                       [goog.events EventTarget Event]])))
@@ -109,7 +108,17 @@
 ;;
 ;; set level (.setLevel logger goog.debug.Logger.Level.INFO)
 ;; disable   (.setCapturing log-console false)
-(defonce logger (glog/getLogger "Figwheel"))
+
+(defonce logger (.call glog/getLogger nil "Figwheel"))
+
+(defn glog-info [log msg]
+  (.call glog/info nil log msg))
+
+(defn glog-warning [log msg]
+  (.call glog/warning nil log msg))
+
+(defn glog-error [log msg]
+  (.call glog/error nil log msg))
 
 (defn ^:export console-logging []
   (when-not (gobj/get goog.debug.Console "instance")
@@ -129,9 +138,8 @@
 ;; --------------------------------------------------
 ;; Cross Platform event dispatch
 ;; --------------------------------------------------
-(def ^:export event-target (if (and (exists? js/document)
-                                    (exists? js/document.body))
-                             js/document.body
+(def ^:export event-target (if (exists? js/document)
+                             js/document
                              (EventTarget.)))
 
 (defonce listener-key-map (atom {}))
@@ -220,12 +228,6 @@
         (goog.string/startsWith "clojure." ns)
         (goog.string/startsWith "goog." ns))))
 
-(defn name->path [ns]
-  (gobj/get js/goog.dependencies_.nameToPath ns))
-
-(defn provided? [ns]
-  (gobj/get js/goog.dependencies_.written (name->path (name ns))))
-
 (defn ns-exists? [ns]
   (some? (reduce (fnil gobj/get #js{})
                  goog.global (string/split (name ns) "."))))
@@ -238,8 +240,7 @@
      (or
       (:figwheel-always meta-data)
       (:figwheel-load meta-data)
-      ;; might want to use .-visited here
-      (provided? namespace)
+      ;; don't reload it if it doesn't exist
       (ns-exists? namespace)))))
 
 ;; ----------------------------------------------------------------
@@ -268,9 +269,12 @@
                             goog.global
                             (map str (concat (string/split n #"\.") [f])))]
         (do
-          (glog/info logger (str "Calling " (pr-str hook-key) " hook - " n "." f))
-          (apply hook args))
-        (glog/warning logger (str "Unable to find " (pr-str hook-key) " hook - " n "." f))))))
+          (glog-info logger (str "Calling " (pr-str hook-key) " hook - " n "." f))
+          (try
+            (apply hook args)
+            (catch js/Error e
+              (glog-error logger e))))
+        (glog-warning logger (str "Unable to find " (pr-str hook-key) " hook - " n "." f))))))
 
 (defn ^:export reload-namespaces [namespaces figwheel-meta]
   ;; reconstruct serialized data
@@ -297,11 +301,11 @@
             (fn []
               (try
                 (when (not-empty to-reload)
-                  (glog/info logger (str "loaded " (pr-str to-reload)))
+                  (glog-info logger (str "loaded " (pr-str to-reload)))
                   (call-hooks :after-load {:reloaded-namespaces to-reload})
                   (dispatch-event :figwheel.after-load {:reloaded-namespaces to-reload}))
                 (when-let [not-loaded (not-empty (filter (complement (set to-reload)) namespaces))]
-                  (glog/info logger (str "did not load " (pr-str not-loaded))))
+                  (glog-info logger (str "did not load " (pr-str not-loaded))))
                 (finally
                   (swap! state assoc ::reload-state {}))))]
         (if (and (exists? js/figwheel.repl)
@@ -319,7 +323,7 @@
     (js/setTimeout #(dispatch-event :figwheel.compile-warnings {:warnings warnings}) 0))
   (swap! state update-in [::reload-state :warnings] concat warnings)
   (doseq [warning warnings]
-    (glog/warning logger (str "Compile Warning - " (:message warning) " in " (file-line-column warning)))))
+    (glog-warning logger (str "Compile Warning - " (:message warning) " in " (file-line-column warning)))))
 
 (defn ^:export compile-warnings-remote [warnings-json]
   (compile-warnings (js->clj warnings-json :keywordize-keys true)))
@@ -334,18 +338,16 @@
     (swap! state #(-> %
                       (assoc-in [::reload-state :reload-started] (.getTime (js/Date.)))
                       (assoc-in [::reload-state :exception] exception-data)))
-    (glog/info logger "Compile Exception")
-    (when (or type message)
-      (glog/info logger (string/join " : "(filter some? [type message]))))
-    (when file
-      (glog/info logger (str "Error on " (file-line-column exception-data))))
+    (glog-warning
+     logger
+     (cond-> "Compile Exception - "
+       (or type message) (str (string/join " : " (filter some? [type message])))
+       file (str " in " (file-line-column exception-data))))
     (finally
       (swap! state assoc-in [::reload-state] {}))))
 
 (defn ^:export handle-exception-remote [exception-data]
-  (handle-exception (js->clj exception-data :keywordize-keys true)))
-
-))
+  (handle-exception (js->clj exception-data :keywordize-keys true)))))
 
 #?(:clj
    (do
@@ -675,8 +677,6 @@
 
 (defn warnings->warning-infos [warnings]
   (->> warnings
-       (filter
-        (comp cljs.analyzer/*cljs-warnings* :warning-type))
        (map warning-info)
        not-empty))
 
@@ -857,12 +857,13 @@
        (binding [cljs.analyzer/*cljs-warning-handlers*
                  (conj cljs.analyzer/*cljs-warning-handlers*
                        (fn [warning-type env extra]
-                         (vswap! local-data update :warnings
-                                 (fnil conj [])
-                                 {:warning-type warning-type
-                                  :env env
-                                  :extra extra
-                                  :path ana/*cljs-file*})))]
+                         (when (warning-type cljs.analyzer/*cljs-warnings*)
+                           (vswap! local-data update :warnings
+                                   (fnil conj [])
+                                   {:warning-type warning-type
+                                    :env env
+                                    :extra extra
+                                    :path ana/*cljs-file*}))))]
          (try
            (swap! compiler-env vary-meta assoc ::compile-data {:started (System/currentTimeMillis)})
            (let [res (cljs-build src opts compiler-env)]

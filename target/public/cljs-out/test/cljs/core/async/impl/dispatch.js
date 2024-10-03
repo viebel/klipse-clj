@@ -1,4 +1,4 @@
-// Compiled by ClojureScript 1.10.520 {}
+// Compiled by ClojureScript 1.11.132 {:optimizations :none}
 goog.provide('cljs.core.async.impl.dispatch');
 goog.require('cljs.core');
 goog.require('cljs.core.async.impl.buffers');
@@ -8,20 +8,20 @@ cljs.core.async.impl.dispatch.running_QMARK_ = false;
 cljs.core.async.impl.dispatch.queued_QMARK_ = false;
 cljs.core.async.impl.dispatch.TASK_BATCH_SIZE = (1024);
 cljs.core.async.impl.dispatch.process_messages = (function cljs$core$async$impl$dispatch$process_messages(){
-cljs.core.async.impl.dispatch.running_QMARK_ = true;
+(cljs.core.async.impl.dispatch.running_QMARK_ = true);
 
-cljs.core.async.impl.dispatch.queued_QMARK_ = false;
+(cljs.core.async.impl.dispatch.queued_QMARK_ = false);
 
-var count_13879 = (0);
+var count_20359 = (0);
 while(true){
-var m_13880 = cljs.core.async.impl.dispatch.tasks.pop();
-if((m_13880 == null)){
+var m_20360 = cljs.core.async.impl.dispatch.tasks.pop();
+if((m_20360 == null)){
 } else {
-m_13880.call(null);
+m_20360.call(null);
 
-if((count_13879 < cljs.core.async.impl.dispatch.TASK_BATCH_SIZE)){
-var G__13881 = (count_13879 + (1));
-count_13879 = G__13881;
+if((count_20359 < cljs.core.async.impl.dispatch.TASK_BATCH_SIZE)){
+var G__20361 = (count_20359 + (1));
+count_20359 = G__20361;
 continue;
 } else {
 }
@@ -29,7 +29,7 @@ continue;
 break;
 }
 
-cljs.core.async.impl.dispatch.running_QMARK_ = false;
+(cljs.core.async.impl.dispatch.running_QMARK_ = false);
 
 if((cljs.core.async.impl.dispatch.tasks.length > (0))){
 return cljs.core.async.impl.dispatch.queue_dispatcher.call(null);
@@ -41,9 +41,9 @@ cljs.core.async.impl.dispatch.queue_dispatcher = (function cljs$core$async$impl$
 if(((cljs.core.async.impl.dispatch.queued_QMARK_) && (cljs.core.async.impl.dispatch.running_QMARK_))){
 return null;
 } else {
-cljs.core.async.impl.dispatch.queued_QMARK_ = true;
+(cljs.core.async.impl.dispatch.queued_QMARK_ = true);
 
-return goog.async.nextTick.call(null,cljs.core.async.impl.dispatch.process_messages);
+return goog.async.nextTick(cljs.core.async.impl.dispatch.process_messages);
 }
 });
 cljs.core.async.impl.dispatch.run = (function cljs$core$async$impl$dispatch$run(f){

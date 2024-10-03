@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [get])
   (:require [cljs-http.core :as core]
             [cljs-http.util :as util]
-            [cljs.core.async :as async :refer [<! chan close! put!]]
+            [cljs.core.async :as async :refer [<!]]
             [cljs.reader :refer [read-string]]
             [clojure.string :refer [blank? join split]]
             [goog.Uri :as uri]
@@ -10,7 +10,13 @@
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
 (defn if-pos [v]
-  (if (and v (pos? v)) v))
+  (when (and v (pos? v)) v))
+
+(defn- acc-param [o v]
+  (cond
+    (coll? o) (conj o v)
+    (some? o) [o v]
+    :else     v))
 
 (defn parse-query-params
   "Parse `s` as query params and return a hash map."
@@ -18,8 +24,9 @@
   (if-not (blank? s)
     (reduce
      #(let [[k v] (split %2 #"=")]
-        (assoc %1
+        (update %1
           (keyword (url-decode k))
+          acc-param
           (url-decode v)))
      {} (split (str s) #"&"))))
 
@@ -288,7 +295,7 @@
 
 (def #^{:doc
         "Executes the HTTP request corresponding to the given map and returns the
-   response map for corresponding to the resulting HTTP response.
+   response map corresponding to the resulting HTTP response.
 
    In addition to the standard Ring request keys, the following keys are also
    recognized:

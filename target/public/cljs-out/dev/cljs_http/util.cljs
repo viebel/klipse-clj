@@ -1,4 +1,5 @@
 (ns cljs-http.util
+  (:refer-clojure :exclude [uri?])
   (:import goog.Uri)
   (:require [clojure.string :refer [blank? capitalize join split lower-case]]
             [cognitect.transit :as t]
@@ -9,7 +10,7 @@
   "Returns the value of the HTTP basic authentication header for
   `credentials`."
   [credentials]
-  (if credentials
+  (when credentials
     (let [[username password]
           (if (map? credentials)
             (map credentials [:username :password])
@@ -60,8 +61,9 @@
 (defn json-decode
   "JSON decode an object from `s`."
   [s]
-  (if-let [v (if-not (clojure.string/blank? s) (js/JSON.parse s))]
-    (js->clj v :keywordize-keys true)))
+  (let [v (if-not (clojure.string/blank? s) (js/JSON.parse s))]
+    (when (some? v)
+      (js->clj v :keywordize-keys true))))
 
 (defn json-encode
   "JSON encode `x` into a String."

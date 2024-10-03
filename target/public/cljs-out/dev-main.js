@@ -1,5 +1,5 @@
-var CLOSURE_UNCOMPILED_DEFINES = {"figwheel.repl.connect_url":"ws:\/\/localhost:5016\/figwheel-connect?fwprocess=3f9870&fwbuild=dev"};
-var CLOSURE_NO_DEPS = true;
+window.CLOSURE_UNCOMPILED_DEFINES = {"figwheel.repl.connect_url":"ws:\/\/localhost:5015\/figwheel-connect?fwprocess=d3e037&fwbuild=dev"};
+window.CLOSURE_NO_DEPS = true;
 if(typeof goog == "undefined") document.write('<script src="/cljs-out/dev/goog/base.js"></script>');
 document.write('<script src="/cljs-out/dev/goog/deps.js"></script>');
 document.write('<script src="/cljs-out/dev/cljs_deps.js"></script>');
@@ -8,5 +8,6 @@ document.write('<script>goog.require("figwheel.core");</script>');
 document.write('<script>goog.require("figwheel.main");</script>');
 document.write('<script>goog.require("figwheel.repl.preload");</script>');
 document.write('<script>goog.require("devtools.preload");</script>');
+document.write('<script>goog.require("figwheel.main.system_exit");</script>');
 document.write('<script>goog.require("process.env");</script>');
-document.write('<script>goog.require("klipse_clj.core");</script>');
+document.write('<script>goog.require("klipse_clj.lang.clojure");</script>');

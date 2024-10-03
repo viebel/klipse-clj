@@ -368,7 +368,9 @@
               (put! c (str warnings (second res))))))))
     c))
 
-(defn str-eval-prom [exp {:keys [verbose] :as opts}]
+(defn str-eval-prom 
+  "Returns a promise with the result of the evaluation of exp"
+  [exp {:keys [verbose] :as opts}]
   (let [p (js/Promise.
             (fn [resolve reject]
               (when verbose

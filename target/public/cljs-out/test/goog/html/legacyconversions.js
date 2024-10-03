@@ -1,16 +1,8 @@
-// Copyright 2013 The Closure Library Authors. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS-IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/**
+ * @license
+ * Copyright The Closure Library Authors.
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 /**
  * @fileoverview Transitional utilities to unsafely trust random strings as
@@ -23,7 +15,6 @@
  * should construct goog.html types via their APIs, template systems or
  * sanitizers. If that’s not possible it should use
  * goog.html.uncheckedconversions and undergo security review.
-
  *
  * The semantics of the conversions in goog.html.legacyconversions are very
  * different from the ones provided by goog.html.uncheckedconversions. The
@@ -61,9 +52,6 @@
  * which it is prohibitively expensive to refactor to use goog.html types.
  * Generally, this is code where safety from XSS is either hopeless or
  * unimportant.
- *
- * @visibility {//closure/goog/html:approved_for_legacy_conversion}
- * @visibility {//closure/goog/bin/sizetests:__pkg__}
  */
 
 
@@ -88,9 +76,10 @@ goog.require('goog.html.TrustedResourceUrl');
  *     object.
  */
 goog.html.legacyconversions.safeHtmlFromString = function(html) {
+  'use strict';
   goog.html.legacyconversions.reportCallback_();
   return goog.html.SafeHtml.createSafeHtmlSecurityPrivateDoNotAccessOrElse(
-      html, null /* dir */);
+      html);
 };
 
 
@@ -105,6 +94,7 @@ goog.html.legacyconversions.safeHtmlFromString = function(html) {
  *     object.
  */
 goog.html.legacyconversions.safeScriptFromString = function(script) {
+  'use strict';
   goog.html.legacyconversions.reportCallback_();
   return goog.html.SafeScript.createSafeScriptSecurityPrivateDoNotAccessOrElse(
       script);
@@ -122,6 +112,7 @@ goog.html.legacyconversions.safeScriptFromString = function(script) {
  *     object.
  */
 goog.html.legacyconversions.safeStyleFromString = function(style) {
+  'use strict';
   goog.html.legacyconversions.reportCallback_();
   return goog.html.SafeStyle.createSafeStyleSecurityPrivateDoNotAccessOrElse(
       style);
@@ -139,6 +130,7 @@ goog.html.legacyconversions.safeStyleFromString = function(style) {
  *     a SafeStyleSheet object.
  */
 goog.html.legacyconversions.safeStyleSheetFromString = function(styleSheet) {
+  'use strict';
   goog.html.legacyconversions.reportCallback_();
   return goog.html.SafeStyleSheet
       .createSafeStyleSheetSecurityPrivateDoNotAccessOrElse(styleSheet);
@@ -156,6 +148,7 @@ goog.html.legacyconversions.safeStyleSheetFromString = function(styleSheet) {
  *     object.
  */
 goog.html.legacyconversions.safeUrlFromString = function(url) {
+  'use strict';
   goog.html.legacyconversions.reportCallback_();
   return goog.html.SafeUrl.createSafeUrlSecurityPrivateDoNotAccessOrElse(url);
 };
@@ -172,6 +165,7 @@ goog.html.legacyconversions.safeUrlFromString = function(url) {
  *     TrustedResourceUrl object.
  */
 goog.html.legacyconversions.trustedResourceUrlFromString = function(url) {
+  'use strict';
   goog.html.legacyconversions.reportCallback_();
   return goog.html.TrustedResourceUrl
       .createTrustedResourceUrlSecurityPrivateDoNotAccessOrElse(url);
@@ -180,7 +174,7 @@ goog.html.legacyconversions.trustedResourceUrlFromString = function(url) {
 /**
  * @private {function(): undefined}
  */
-goog.html.legacyconversions.reportCallback_ = goog.nullFunction;
+goog.html.legacyconversions.reportCallback_ = function() {};
 
 
 /**
@@ -191,5 +185,6 @@ goog.html.legacyconversions.reportCallback_ = goog.nullFunction;
  * @param {function(): undefined} callback Error callback as defined above.
  */
 goog.html.legacyconversions.setReportCallback = function(callback) {
+  'use strict';
   goog.html.legacyconversions.reportCallback_ = callback;
 };

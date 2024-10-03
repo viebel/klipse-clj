@@ -1,13 +1,13 @@
 (ns figwheel.repl
   (:require
    [clojure.string :as string]
-   #?@(:cljs [[goog.object :as gobj]
+   #?@(:cljs [[figwheel.repl.logging :as log]
+              [goog.object :as gobj]
               [goog.storage.mechanism.mechanismfactory :as storage-factory]
               [goog.Uri :as guri]
               [goog.string :as gstring]
               [goog.net.jsloader :as loader]
               [goog.net.XhrIo :as xhrio]
-              [goog.log :as glog]
               [goog.array :as garray]
               [goog.json :as gjson]
               [goog.html.legacyconversions :as conv]
@@ -20,7 +20,8 @@
              [cljs.stacktrace]
              [clojure.java.io :as io]
              [clojure.string :as string]
-             [figwheel.server.ring]]))
+             [figwheel.server.ring]
+             [figwheel.server.jetty-websocket]]))
   (:import
    #?@(:cljs [goog.net.WebSocket
               goog.debug.Console
@@ -32,6 +33,7 @@
              [java.lang ProcessBuilder Process]])))
 
 (def default-port 9500)
+(def default-ssl-port 9533)
 
 #?(:cljs (do
 
@@ -47,25 +49,14 @@
 ;; set level (.setLevel logger goog.debug.Logger.Level.INFO)
 ;; disable   (.setCapturing log-console false)
 
-(defonce logger (glog/getLogger "Figwheel REPL"))
+(defonce logger (log/get-logger "Figwheel REPL"))
 
 (defn ^:export console-logging []
-  (when-not (gobj/get goog.debug.Console "instance")
-    (let [c (goog.debug.Console.)]
-      ;; don't display time
-      (doto (.getFormatter c)
-        (gobj/set "showAbsoluteTime" false)
-        (gobj/set "showRelativeTime" false))
-      (gobj/set goog.debug.Console "instance" c)
-      c))
-  (when-let [console-instance (gobj/get goog.debug.Console "instance")]
-    (.setCapturing console-instance true)
-    true))
-
-(defonce log-console (console-logging))
+  (log/console-logging))
 
 (defn debug [msg]
-  (glog/log logger goog.debug.Logger.Level.FINEST msg))
+  (log/debug logger msg))
+
 
 ;; TODO dev
 #_(.setLevel logger goog.debug.Logger.Level.FINEST)
@@ -77,10 +68,14 @@
 (declare queued-file-reload)
 
 (defn unprovide! [ns]
-  (let [path (gobj/get js/goog.dependencies_.nameToPath ns)]
-    (gobj/remove js/goog.dependencies_.visited path)
-    (gobj/remove js/goog.dependencies_.written path)
-    (gobj/remove js/goog.dependencies_.written (str js/goog.basePath path))))
+  (if (some? goog/debugLoader_)
+    (let [path (.getPathFromDeps_ goog/debugLoader_ ns)]
+      (gobj/remove (.-written_ goog/debugLoader_) path)
+      (gobj/remove (.-written_ goog/debugLoader_) (str js/goog.basePath path)))
+    (let [path (gobj/get js/goog.dependencies_.nameToPath ns)]
+      (gobj/remove js/goog.dependencies_.visited path)
+      (gobj/remove js/goog.dependencies_.written path)
+      (gobj/remove js/goog.dependencies_.written (str js/goog.basePath path)))))
 
 ;; this will not work unless bootstrap has been called
 (defn figwheel-require [src reload]
@@ -144,8 +139,8 @@
               (do (.importScripts js/self (add-cache-buster request-url))
                   true)
               (catch js/Error e
-                (glog/error logger (str  "Figwheel: Error loading file " request-url))
-                (glog/error logger e)
+                (log/error logger (str  "Figwheel: Error loading file " request-url))
+                (log/error logger e)
                 false))))
 
 (defn ^:export create-node-script-import-fn []
@@ -164,8 +159,8 @@
         (callback (try
                     (js/require cache-path)
                     (catch js/Error e
-                      (glog/error logger (str  "Figwheel: Error loading file " cache-path))
-                      (glog/error logger e)
+                      (log/error logger (str  "Figwheel: Error loading file " cache-path))
+                      (log/error logger e)
                       false)))))))
 
 (def host-env
@@ -191,16 +186,16 @@
 ;; TODO Should just leverage the import script here somehow
 (defn reload-file [{:keys [request-url] :as file-msg} callback]
   {:pre [(string? request-url) (not (nil? callback))]}
-  (glog/fine logger (str "Attempting to load " request-url))
+  (log/fine logger (str "Attempting to load " request-url))
   ((or (gobj/get goog.global "FIGWHEEL_IMPORT_SCRIPT") reload-file*)
    request-url
    (fn [success?]
      (if success?
        (do
-         (glog/fine logger (str "Successfully loaded " request-url))
+         (log/fine logger (str "Successfully loaded " request-url))
          (apply callback [(assoc file-msg :loaded-file true)]))
        (do
-         (glog/error logger (str  "Error loading file " request-url))
+         (log/error logger (str  "Error loading file " request-url))
          (apply callback [file-msg]))))))
 
 ;; for goog.require consumption
@@ -209,25 +204,29 @@
 (defn queued-file-reload
   ([url] (queued-file-reload url nil))
   ([url opt-source-text]
-   (when-let [next-promise-fn
-              (cond opt-source-text
-                #(.then %
-                        (fn [_]
-                          (Promise.
-                           (fn [r _]
-                             (try (js/eval opt-source-text)
-                                  (catch js/Error e
-                                    (glog/error logger e)))
-                             (r true)))))
-                url
-                #(.then %
-                        (fn [_]
-                          (Promise.
-                           (fn [r _]
-                             (reload-file {:request-url url}
-                                          (fn [file-msg]
-                                            (r true))))))))]
-     (swap! reload-promise-chain next-promise-fn))))
+   ;; guard against reloading goog/base.js
+   ;; as it will blow away import figwheel reloading hooks
+   (if (string/ends-with? url "goog/base.js")
+     true
+     (when-let [next-promise-fn
+                (cond opt-source-text
+                      #(.then %
+                              (fn [_]
+                                (Promise.
+                                 (fn [r _]
+                                   (try (js/eval opt-source-text)
+                                        (catch js/Error e
+                                          (log/error logger e)))
+                                   (r true)))))
+                      url
+                      #(.then %
+                              (fn [_]
+                                (Promise.
+                                 (fn [r _]
+                                   (reload-file {:request-url url}
+                                                (fn [file-msg]
+                                                  (r true))))))))]
+       (swap! reload-promise-chain next-promise-fn)))))
 
 (defn ^:export after-reloads [f]
   (swap! reload-promise-chain #(.then % f)))
@@ -309,10 +308,11 @@
                   (.write post-data)
                   (.end))))))
     (fn [url response]
-      (xhrio/send url
-                  (fn [e] (debug "Response Posted"))
-                  "POST"
-                  response))))
+      (js/goog.net.XhrIo.send
+       url
+       (fn [e] (debug "Response Posted"))
+       "POST"
+       response))))
 
 (defn respond-to [{:keys [websocket http-url] :as old-msg} response-body]
   (let [response (response-for old-msg response-body)]
@@ -329,8 +329,8 @@
 (defmethod message "naming" [msg]
   (when-let [sn  (:session-name msg)] (set-state ::session-name sn))
   (when-let [sid (:session-id msg)]   (set-state ::session-id sid))
-  (glog/info logger (str "Session ID: "   (session-id)))
-  (glog/info logger (str "Session Name: " (session-name))))
+  (log/info logger (str "Session ID: "   (session-id)))
+  (log/info logger (str "Session Name: " (session-name))))
 
 (defmethod message "ping" [msg] (respond-to msg {:pong true}))
 
@@ -396,7 +396,10 @@
       connect-url'))
 
 (defn make-url [connect-url']
-  (let [uri (guri/parse (fill-url-template (or connect-url' connect-url)))]
+  (let [uri (guri/parse (fill-url-template (or connect-url' connect-url)))
+        domain (.getDomain uri)]
+    (when (string/ends-with? domain ":")
+      (.setDomain uri (subs domain 0 (dec (count domain)))))
     (cond-> (.add (.getQueryData uri) "fwsid" (or (session-id) (random-uuid)))
       (session-name) (.add "fwsname" (session-name)))
     uri))
@@ -453,7 +456,7 @@
         (thunk)
         (gobj/set goog.global "WebSocket" nil))
       (do
-        (glog/error
+        (log/error
          logger
          (if (= host-env :node)
            "Can't connect!! Please make sure ws is installed\n do -> 'npm install ws'"
@@ -474,7 +477,7 @@
                                              (js->clj (js/JSON.parse msg) :keywordize-keys true)
                                              :websocket websocket))
                                    (catch js/Error e
-                                     (glog/error logger e))))))
+                                     (log/error logger e))))))
           (.addEventListener goog.net.WebSocket.EventType.OPENED
                              (fn [e]
                                (connection-established! url)
@@ -509,7 +512,7 @@
     (fn [url]
       (Promise.
        (fn [succ err]
-         (xhrio/send
+         (js/goog.net.XhrIo.send
           url
           (fn [e]
             (let [xhr (gobj/get e "target")]
@@ -546,13 +549,13 @@
                    (message (assoc (js->clj msg :keywordize-keys true)
                                    :http-url surl))
                    (catch js/Error e
-                     (glog/error logger e))))]
+                     (log/error logger e))))]
     (doto (.getQueryData url)
       (.add "fwinit" "true"))
     (.then (http-get url)
            (fn [msg]
              (let [typ (gobj/get msg "connection-type")]
-               (glog/info logger (str "Connected: " typ))
+               (log/info logger (str "Connected: " typ))
                (msg-fn msg)
                (connection-established! url)
                ;; after connecting setup printing redirects
@@ -563,11 +566,11 @@
                  (poll msg-fn connect-url'))))
            (fn [e];; didn't connect
              (when (instance? js/Error e)
-               (glog/error logger e))
+               (log/error logger e))
              (when (and (instance? goog.net.XhrIo e) (.getResponseBody e))
                (debug (.getResponseBody e)))
              (let [wait-time (exponential-backoff attempt)]
-               (glog/info logger (str "HTTP Connection Error: next connection attempt in " (/ wait-time 1000) " seconds"))
+               (log/info logger (str "HTTP Connection Error: next connection attempt in " (/ wait-time 1000) " seconds"))
                (js/setTimeout #(http-connect* (inc attempt) connect-url')
                               wait-time))))))
 
@@ -579,7 +582,7 @@
           (get-websocket-class))
     url
     (do
-      (glog/warning
+      (log/warning
        logger
        (str
         "No WebSocket implementation found! Falling back to http-long-polling"
@@ -591,26 +594,11 @@
 
 (goog-define client-log-level "info")
 
-(def log-levels
-  (into {}
-        (map (juxt
-              string/lower-case
-              #(gobj/get goog.debug.Logger.Level %))
-             (map str '(SEVERE WARNING INFO CONFIG FINE FINER FINEST)))))
-
-(defn set-log-level [logger' level]
-  (if-let [lvl (get log-levels level)]
-    (do
-      (.setLevel logger' lvl)
-      (debug (str "setting log level to " level)))
-    (glog/warn (str "Log level " (pr-str level) " doesn't exist must be one of "
-                    (pr-str '("severe" "warning" "info" "config" "fine" "finer" "finest"))))))
-
 (defn init-log-level! []
   (doseq [logger' (cond-> [logger]
                     (exists? js/figwheel.core)
                     (conj js/figwheel.core.logger))]
-    (set-log-level logger' client-log-level)))
+    (log/set-log-level logger' client-log-level)))
 
 (defn connect* [connect-url']
   (init-log-level!)
@@ -1057,24 +1045,22 @@
           (repl-env-print repl-env :out [(string/trim-newline out)])))
       result)))
 
-(defn require-resolve [symbol-str]
-  (let [sym (symbol symbol-str)]
-    (when-let [ns (namespace sym)]
-      (try
-        (require (symbol ns))
-        (resolve sym)
-        (catch Throwable e
-          nil)))))
 
-#_(require-resolve 'figwheel.server.jetty-websocket/run-server)
 
 ;; TODO more precise error when loaded but fn doesn't exist
 (defn dynload [ns-sym-str]
-  (let [resolved (require-resolve ns-sym-str)]
-    (if resolved
-      resolved
+  (try
+    (let [sym (symbol ns-sym-str)]
+      (when-let [ns (namespace sym)]
+        (try
+          (require (symbol ns))
+          (resolve sym))))
+    (catch Throwable e
       (throw (ex-info (str "Figwheel: Unable to dynamicly load " ns-sym-str)
-                      {:not-loaded ns-sym-str})))))
+                      {:not-loaded ns-sym-str}
+                      e)))))
+
+#_(dynload "figwheel.server.jetty-websocket/run-server")
 
 ;; taken from ring server
 (defn try-port
@@ -1092,23 +1078,29 @@
 (defn run-default-server*
   [options connections]
   ;; require and run figwheel server
-  (let [server-fn (dynload (get options :ring-server
-                                'figwheel.server.jetty-websocket/run-server))
+  (let [server-fn (or (when-let [server-fn-symbol (get options :ring-server)]
+                        (dynload server-fn-symbol))
+                      figwheel.server.jetty-websocket/run-server)
         figwheel-connect-path (get options :figwheel-connect-path "/figwheel-connect")]
     (server-fn
-     ((dynload (get options :ring-stack 'figwheel.server.ring/default-stack))
+     ((or (when-let [stack-fn (get options :ring-stack)]
+            (dynload stack-fn))
+          figwheel.server.ring/default-stack)
       (:ring-handler options)
       ;; TODO this should only work for the default target of browser
       (cond-> (:ring-stack-options options)
-          (and
-           (contains? #{nil :browser} (:target options))
-           (:output-to options)
-           (not (get-in (:ring-stack-options options) [:figwheel.server.ring/dev :figwheel.server.ring/system-app-handler])))
-          (assoc-in
-           [:figwheel.server.ring/dev :figwheel.server.ring/system-app-handler]
-           #(figwheel.server.ring/default-index-html
-             %
-             (figwheel.server.ring/index-html (select-keys options [:output-to]))))))
+        (:cljsjs-resources options)
+        (assoc-in [:figwheel.server.ring/dev :figwheel.server.ring/cljsjs-resources] true)
+        ;; do we need a default index?
+        (and
+         (contains? #{nil :browser :bundle} (:target options))
+         (:output-to options)
+         (not (get-in (:ring-stack-options options) [:figwheel.server.ring/dev :figwheel.server.ring/system-app-handler])))
+        (assoc-in
+         [:figwheel.server.ring/dev :figwheel.server.ring/system-app-handler]
+         #(figwheel.server.ring/default-index-html
+           %
+           (figwheel.server.ring/index-html (select-keys options [:output-to]))))))
      (assoc (get options :ring-server-options)
             :async-handlers
             {figwheel-connect-path
@@ -1182,6 +1174,12 @@
                output-log-file (.redirectOutput (io/file output-log-file)))]
     (.start proc)))
 
+(defn launch-browser [open-url]
+  (try
+    (browse/browse-url open-url)
+    (catch Throwable t
+      (println "Failed to open browser:" (.getMessage t)))))
+
 ;; when doing a port search
 ;; - what needs to know the port afterwards?
 ;; - auto open the browser, this is easy enough.
@@ -1196,18 +1194,21 @@
              (nil? *server*))
          (nil? @(:server repl-env)))
     (let [server (run-default-server
+                  ;; this strange merging order is to ensure that the repl-env
+                  ;; :target is prefered as it can be :bundle when the opts :target
+                  ;; is :nodejs
                   (merge
+                   (select-keys opts [:target :output-to])
                    (select-keys repl-env [:port
                                           :host
                                           :target
                                           :output-to
                                           :ring-handler
+                                          :cljsjs-resources
                                           :ring-server
                                           :ring-server-options
                                           :ring-stack
-                                          :ring-stack-options])
-                   (select-keys opts [:target
-                                      :output-to]))
+                                          :ring-stack-options]))
                   *connections*)]
       (reset! (:server repl-env) server)))
   ;; printing
@@ -1226,9 +1227,11 @@
                         (repl-env-print repl-env stream args))))))))]
       (reset! (:printing-listener repl-env) print-listener)
       (add-listener print-listener)))
-  (let [{:keys [target output-to output-dir]}
+  ;; have to get target from repl-env because it holds the original target
+  (let [target (get repl-env :target)
+        {:keys [output-to output-dir]}
         (apply merge
-               (map #(select-keys % [:target :output-to :output-dir]) [repl-env opts]))
+               (map #(select-keys % [:output-to :output-dir]) [opts repl-env]))
         open-url (and (:open-url repl-env)
                       (fill-server-url-template
                        (:open-url repl-env)
@@ -1263,10 +1266,14 @@
         (open open-url)
         (do
           (println "Opening URL" open-url)
-          (try
-            (browse/browse-url open-url)
-            (catch Throwable t
-              (println "Failed to open browser:" (.getMessage t))))))
+          (if-let [wait-ms (:open-url-wait-ms repl-env 1500)]
+            (doto (Thread.
+                   (fn []
+                     (Thread/sleep wait-ms)
+                     (launch-browser open-url)))
+              (.setDaemon true)
+              (.start))
+            (launch-browser open-url))))
       (and (nil? target)
            (not (:launch-js repl-env))
            (false? open-url))
@@ -1312,27 +1319,27 @@
   cljs.repl/IReplEnvOptions
   (-repl-options [this]
     (let [main-fn (resolve 'figwheel.main/default-main)]
-      (cond->
-          {;:browser-repl true
-           :preloads '[[figwheel.repl.preload]]
-           :cljs.cli/commands
-           {:groups {::repl {:desc "Figwheel REPL options"}}
-            :init
-            {["-H" "--host"]
-             {:group ::repl :fn #(assoc-in %1 [:repl-env-options :host] %2)
-              :arg "address"
-              :doc "Address to bind"}
-             ["-p" "--port"]
-             {:group ::repl :fn #(assoc-in %1 [:repl-env-options :port] (Integer/parseInt %2))
-              :arg "number"
-              :doc "Port to bind"}
-             ["-rh" "--ring-handler"]
-             {:group ::repl :fn #(assoc-in %1 [:repl-env-options :ring-handler]
-                                           (when %2
-                                             (dynload %2)))
-              :arg "string"
-              :doc "Ring Handler for default REPL server EX. \"example.server/handler\" "}}}}
-        main-fn    (assoc :cljs.cli/main @main-fn))))
+      (cond-> {;:browser-repl true
+               :preloads '[[figwheel.repl.preload]]
+               :cljs.cli/commands
+               {:groups {::repl {:desc "Figwheel REPL options"}}
+                :init
+                {["-H" "--host"]
+                 {:group ::repl :fn #(assoc-in %1 [:repl-env-options :host] %2)
+                  :arg "address"
+                  :doc "Address to bind"}
+                 ["-p" "--port"]
+                 {:group ::repl :fn #(assoc-in %1 [:repl-env-options :port] (Integer/parseInt %2))
+                  :arg "number"
+                  :doc "Port to bind"}
+                 ["-rh" "--ring-handler"]
+                 {:group ::repl :fn #(assoc-in %1 [:repl-env-options :ring-handler]
+                                               (when %2
+                                                 (dynload %2)))
+                  :arg "string"
+                  :doc "Ring Handler for default REPL server EX. \"example.server/handler\" "}}}}
+        (:output-dir this) (assoc :output-dir (:output-dir this))
+        main-fn (assoc :cljs.cli/main @main-fn))))
   cljs.repl/IParseStacktrace
   (-parse-stacktrace [this st err opts]
     (cljs.stacktrace/parse-stacktrace this st err opts)))
@@ -1358,6 +1365,9 @@
           :broadcast false
           :port port}
          opts))
+
+(defn repl-env [& {:as opts}]
+  (repl-env* opts))
 
 ;; ------------------------------------------------------
 ;; Connection management

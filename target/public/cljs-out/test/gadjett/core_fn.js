@@ -1,4 +1,4 @@
-// Compiled by ClojureScript 1.10.520 {}
+// Compiled by ClojureScript 1.11.132 {:optimizations :none}
 goog.provide('gadjett.core_fn');
 goog.require('cljs.core');
 goog.require('gadjett.collections');
@@ -11,47 +11,45 @@ if((typeof gadjett !== 'undefined') && (typeof gadjett.core_fn !== 'undefined') 
 gadjett.core_fn.settings = new cljs.core.PersistentArrayMap(null, 4, [new cljs.core.Keyword(null,"max-function-calls","max-function-calls",-350003092),(50),new cljs.core.Keyword(null,"timeslot-function-calls-msec","timeslot-function-calls-msec",189712759),(1000),new cljs.core.Keyword(null,"compact-max-elements-in-seq","compact-max-elements-in-seq",418251211),(5),new cljs.core.Keyword(null,"compact-max-chars-in-str","compact-max-chars-in-str",240586724),(10)], null);
 }
 gadjett.core_fn.settings_BANG_ = (function gadjett$core_fn$settings_BANG_(var_args){
-var args__4736__auto__ = [];
-var len__4730__auto___22899 = arguments.length;
-var i__4731__auto___22900 = (0);
+var args__5732__auto__ = [];
+var len__5726__auto___35580 = arguments.length;
+var i__5727__auto___35581 = (0);
 while(true){
-if((i__4731__auto___22900 < len__4730__auto___22899)){
-args__4736__auto__.push((arguments[i__4731__auto___22900]));
+if((i__5727__auto___35581 < len__5726__auto___35580)){
+args__5732__auto__.push((arguments[i__5727__auto___35581]));
 
-var G__22901 = (i__4731__auto___22900 + (1));
-i__4731__auto___22900 = G__22901;
+var G__35582 = (i__5727__auto___35581 + (1));
+i__5727__auto___35581 = G__35582;
 continue;
 } else {
 }
 break;
 }
 
-var argseq__4737__auto__ = ((((0) < args__4736__auto__.length))?(new cljs.core.IndexedSeq(args__4736__auto__.slice((0)),(0),null)):null);
-return gadjett.core_fn.settings_BANG_.cljs$core$IFn$_invoke$arity$variadic(argseq__4737__auto__);
+var argseq__5733__auto__ = ((((0) < args__5732__auto__.length))?(new cljs.core.IndexedSeq(args__5732__auto__.slice((0)),(0),null)):null);
+return gadjett.core_fn.settings_BANG_.cljs$core$IFn$_invoke$arity$variadic(argseq__5733__auto__);
 });
 
-gadjett.core_fn.settings_BANG_.cljs$core$IFn$_invoke$arity$variadic = (function (p__22896){
-var map__22897 = p__22896;
-var map__22897__$1 = (((((!((map__22897 == null))))?(((((map__22897.cljs$lang$protocol_mask$partition0$ & (64))) || ((cljs.core.PROTOCOL_SENTINEL === map__22897.cljs$core$ISeq$))))?true:false):false))?cljs.core.apply.call(null,cljs.core.hash_map,map__22897):map__22897);
-var args = map__22897__$1;
-return gadjett.core_fn.settings = cljs.core.merge.call(null,gadjett.core_fn.settings,args);
-});
+(gadjett.core_fn.settings_BANG_.cljs$core$IFn$_invoke$arity$variadic = (function (p__35578){
+var map__35579 = p__35578;
+var map__35579__$1 = cljs.core.__destructure_map.call(null,map__35579);
+var args = map__35579__$1;
+return (gadjett.core_fn.settings = cljs.core.merge.call(null,gadjett.core_fn.settings,args));
+}));
 
-gadjett.core_fn.settings_BANG_.cljs$lang$maxFixedArity = (0);
+(gadjett.core_fn.settings_BANG_.cljs$lang$maxFixedArity = (0));
 
 /** @this {Function} */
-gadjett.core_fn.settings_BANG_.cljs$lang$applyTo = (function (seq22895){
-var self__4718__auto__ = this;
-return self__4718__auto__.cljs$core$IFn$_invoke$arity$variadic(cljs.core.seq.call(null,seq22895));
-});
+(gadjett.core_fn.settings_BANG_.cljs$lang$applyTo = (function (seq35577){
+var self__5712__auto__ = this;
+return self__5712__auto__.cljs$core$IFn$_invoke$arity$variadic(cljs.core.seq.call(null,seq35577));
+}));
 
 gadjett.core_fn.add_event_and_filter = (function gadjett$core_fn$add_event_and_filter(timestamp_msec,events){
 var timeslot = new cljs.core.Keyword(null,"timeslot-function-calls-msec","timeslot-function-calls-msec",189712759).cljs$core$IFn$_invoke$arity$1(gadjett.core_fn.settings);
-return cljs.core.cons.call(null,timestamp_msec,cljs.core.take_while.call(null,((function (timeslot){
-return (function (p1__22902_SHARP_){
-return (p1__22902_SHARP_ > (timestamp_msec - timeslot));
-});})(timeslot))
-,events));
+return cljs.core.cons.call(null,timestamp_msec,cljs.core.take_while.call(null,(function (p1__35583_SHARP_){
+return (p1__35583_SHARP_ > (timestamp_msec - timeslot));
+}),events));
 });
 gadjett.core_fn.add_event = (function gadjett$core_fn$add_event(history,func_name,timestamp_msec){
 return cljs.core.update.call(null,history,func_name,cljs.core.partial.call(null,gadjett.core_fn.add_event_and_filter,timestamp_msec));
@@ -71,8 +69,8 @@ return cljs.core.sort_by.call(null,cljs.core.second,gadjett.collections.map_obje
  * returns the history as an array, sorted by number of function calls
  */
 gadjett.core_fn.the_history = (function gadjett$core_fn$the_history(var_args){
-var G__22904 = arguments.length;
-switch (G__22904) {
+var G__35585 = arguments.length;
+switch (G__35585) {
 case 1:
 return gadjett.core_fn.the_history.cljs$core$IFn$_invoke$arity$1((arguments[(0)]));
 
@@ -87,15 +85,15 @@ throw (new Error(["Invalid arity: ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(
 }
 });
 
-gadjett.core_fn.the_history.cljs$core$IFn$_invoke$arity$1 = (function (k){
+(gadjett.core_fn.the_history.cljs$core$IFn$_invoke$arity$1 = (function (k){
 return cljs.core.get.call(null,cljs.core.deref.call(null,gadjett.core_fn.history),k);
-});
+}));
 
-gadjett.core_fn.the_history.cljs$core$IFn$_invoke$arity$0 = (function (){
+(gadjett.core_fn.the_history.cljs$core$IFn$_invoke$arity$0 = (function (){
 return gadjett.core_fn.sort_history.call(null,cljs.core.deref.call(null,gadjett.core_fn.history));
-});
+}));
 
-gadjett.core_fn.the_history.cljs$lang$maxFixedArity = 1;
+(gadjett.core_fn.the_history.cljs$lang$maxFixedArity = 1);
 
 gadjett.core_fn.function_call_err_msg = (function gadjett$core_fn$function_call_err_msg(func_name,args){
 return [cljs.core.str.cljs$core$IFn$_invoke$arity$1(func_name)," was called too much over the last ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(new cljs.core.Keyword(null,"timeslot-function-calls-msec","timeslot-function-calls-msec",189712759).cljs$core$IFn$_invoke$arity$1(gadjett.core_fn.settings))," msec: ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(func_name)].join('');

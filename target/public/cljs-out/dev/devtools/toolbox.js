@@ -1,4 +1,4 @@
-// Compiled by ClojureScript 1.10.520 {}
+// Compiled by ClojureScript 1.11.132 {:optimizations :none}
 goog.provide('devtools.toolbox');
 goog.require('cljs.core');
 goog.require('devtools.protocols');
@@ -12,8 +12,8 @@ goog.require('devtools.formatters.markup');
  *   via disclosure triangle. The header can be styled and you can optionally specify preferred wrapping tag (advanced).
  */
 devtools.toolbox.envelope = (function devtools$toolbox$envelope(var_args){
-var G__24722 = arguments.length;
-switch (G__24722) {
+var G__40239 = arguments.length;
+switch (G__40239) {
 case 1:
 return devtools.toolbox.envelope.cljs$core$IFn$_invoke$arity$1((arguments[(0)]));
 
@@ -36,20 +36,20 @@ throw (new Error(["Invalid arity: ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(
 }
 });
 
-devtools.toolbox.envelope.cljs$core$IFn$_invoke$arity$1 = (function (obj){
+(devtools.toolbox.envelope.cljs$core$IFn$_invoke$arity$1 = (function (obj){
 return devtools.toolbox.envelope.call(null,obj,new cljs.core.Keyword(null,"default-envelope-header","default-envelope-header",-90723598));
-});
+}));
 
-devtools.toolbox.envelope.cljs$core$IFn$_invoke$arity$2 = (function (obj,header){
+(devtools.toolbox.envelope.cljs$core$IFn$_invoke$arity$2 = (function (obj,header){
 return devtools.toolbox.envelope.call(null,obj,header,new cljs.core.Keyword(null,"default-envelope-style","default-envelope-style",-1676750479));
-});
+}));
 
-devtools.toolbox.envelope.cljs$core$IFn$_invoke$arity$3 = (function (obj,header,style){
+(devtools.toolbox.envelope.cljs$core$IFn$_invoke$arity$3 = (function (obj,header,style){
 return devtools.toolbox.envelope.call(null,obj,header,style,new cljs.core.Keyword(null,"span","span",1394872991));
-});
+}));
 
-devtools.toolbox.envelope.cljs$core$IFn$_invoke$arity$4 = (function (obj,header,style,tag){
-if((typeof devtools !== 'undefined') && (typeof devtools.toolbox !== 'undefined') && (typeof devtools.toolbox.t_devtools$toolbox24723 !== 'undefined')){
+(devtools.toolbox.envelope.cljs$core$IFn$_invoke$arity$4 = (function (obj,header,style,tag){
+if((typeof devtools !== 'undefined') && (typeof devtools.toolbox !== 'undefined') && (typeof devtools.toolbox.t_devtools$toolbox40240 !== 'undefined')){
 } else {
 
 /**
@@ -58,72 +58,72 @@ if((typeof devtools !== 'undefined') && (typeof devtools.toolbox !== 'undefined'
  * @implements {cljs.core.IMeta}
  * @implements {cljs.core.IWithMeta}
 */
-devtools.toolbox.t_devtools$toolbox24723 = (function (obj,header,style,tag,meta24724){
+devtools.toolbox.t_devtools$toolbox40240 = (function (obj,header,style,tag,meta40241){
 this.obj = obj;
 this.header = header;
 this.style = style;
 this.tag = tag;
-this.meta24724 = meta24724;
+this.meta40241 = meta40241;
 this.cljs$lang$protocol_mask$partition0$ = 393216;
 this.cljs$lang$protocol_mask$partition1$ = 0;
 });
-devtools.toolbox.t_devtools$toolbox24723.prototype.cljs$core$IWithMeta$_with_meta$arity$2 = (function (_24725,meta24724__$1){
+(devtools.toolbox.t_devtools$toolbox40240.prototype.cljs$core$IWithMeta$_with_meta$arity$2 = (function (_40242,meta40241__$1){
 var self__ = this;
-var _24725__$1 = this;
-return (new devtools.toolbox.t_devtools$toolbox24723(self__.obj,self__.header,self__.style,self__.tag,meta24724__$1));
-});
+var _40242__$1 = this;
+return (new devtools.toolbox.t_devtools$toolbox40240(self__.obj,self__.header,self__.style,self__.tag,meta40241__$1));
+}));
 
-devtools.toolbox.t_devtools$toolbox24723.prototype.cljs$core$IMeta$_meta$arity$1 = (function (_24725){
+(devtools.toolbox.t_devtools$toolbox40240.prototype.cljs$core$IMeta$_meta$arity$1 = (function (_40242){
 var self__ = this;
-var _24725__$1 = this;
-return self__.meta24724;
-});
+var _40242__$1 = this;
+return self__.meta40241;
+}));
 
-devtools.toolbox.t_devtools$toolbox24723.prototype.devtools$protocols$IFormat$ = cljs.core.PROTOCOL_SENTINEL;
+(devtools.toolbox.t_devtools$toolbox40240.prototype.devtools$protocols$IFormat$ = cljs.core.PROTOCOL_SENTINEL);
 
-devtools.toolbox.t_devtools$toolbox24723.prototype.devtools$protocols$IFormat$_header$arity$1 = (function (_){
+(devtools.toolbox.t_devtools$toolbox40240.prototype.devtools$protocols$IFormat$_header$arity$1 = (function (_){
 var self__ = this;
 var ___$1 = this;
 return devtools.formatters.templating.render_markup.call(null,new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [self__.tag,self__.style], null),((cljs.core.fn_QMARK_.call(null,self__.header))?self__.header.call(null,self__.obj):self__.header)], null));
-});
+}));
 
-devtools.toolbox.t_devtools$toolbox24723.prototype.devtools$protocols$IFormat$_has_body$arity$1 = (function (_){
+(devtools.toolbox.t_devtools$toolbox40240.prototype.devtools$protocols$IFormat$_has_body$arity$1 = (function (_){
 var self__ = this;
 var ___$1 = this;
 return true;
-});
+}));
 
-devtools.toolbox.t_devtools$toolbox24723.prototype.devtools$protocols$IFormat$_body$arity$1 = (function (_){
+(devtools.toolbox.t_devtools$toolbox40240.prototype.devtools$protocols$IFormat$_body$arity$1 = (function (_){
 var self__ = this;
 var ___$1 = this;
 return devtools.formatters.templating.render_markup.call(null,devtools.formatters.markup._LT_body_GT_.call(null,devtools.formatters.markup._LT_standard_body_reference_GT_.call(null,self__.obj)));
-});
+}));
 
-devtools.toolbox.t_devtools$toolbox24723.getBasis = (function (){
-return new cljs.core.PersistentVector(null, 5, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Symbol(null,"obj","obj",-1672671807,null),new cljs.core.Symbol(null,"header","header",1759972661,null),new cljs.core.Symbol(null,"style","style",1143888791,null),new cljs.core.Symbol(null,"tag","tag",350170304,null),new cljs.core.Symbol(null,"meta24724","meta24724",1242533286,null)], null);
-});
+(devtools.toolbox.t_devtools$toolbox40240.getBasis = (function (){
+return new cljs.core.PersistentVector(null, 5, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Symbol(null,"obj","obj",-1672671807,null),new cljs.core.Symbol(null,"header","header",1759972661,null),new cljs.core.Symbol(null,"style","style",1143888791,null),new cljs.core.Symbol(null,"tag","tag",350170304,null),new cljs.core.Symbol(null,"meta40241","meta40241",-1810453806,null)], null);
+}));
 
-devtools.toolbox.t_devtools$toolbox24723.cljs$lang$type = true;
+(devtools.toolbox.t_devtools$toolbox40240.cljs$lang$type = true);
 
-devtools.toolbox.t_devtools$toolbox24723.cljs$lang$ctorStr = "devtools.toolbox/t_devtools$toolbox24723";
+(devtools.toolbox.t_devtools$toolbox40240.cljs$lang$ctorStr = "devtools.toolbox/t_devtools$toolbox40240");
 
-devtools.toolbox.t_devtools$toolbox24723.cljs$lang$ctorPrWriter = (function (this__4374__auto__,writer__4375__auto__,opt__4376__auto__){
-return cljs.core._write.call(null,writer__4375__auto__,"devtools.toolbox/t_devtools$toolbox24723");
-});
+(devtools.toolbox.t_devtools$toolbox40240.cljs$lang$ctorPrWriter = (function (this__5287__auto__,writer__5288__auto__,opt__5289__auto__){
+return cljs.core._write.call(null,writer__5288__auto__,"devtools.toolbox/t_devtools$toolbox40240");
+}));
 
 /**
- * Positional factory function for devtools.toolbox/t_devtools$toolbox24723.
+ * Positional factory function for devtools.toolbox/t_devtools$toolbox40240.
  */
-devtools.toolbox.__GT_t_devtools$toolbox24723 = (function devtools$toolbox$__GT_t_devtools$toolbox24723(obj__$1,header__$1,style__$1,tag__$1,meta24724){
-return (new devtools.toolbox.t_devtools$toolbox24723(obj__$1,header__$1,style__$1,tag__$1,meta24724));
+devtools.toolbox.__GT_t_devtools$toolbox40240 = (function devtools$toolbox$__GT_t_devtools$toolbox40240(obj__$1,header__$1,style__$1,tag__$1,meta40241){
+return (new devtools.toolbox.t_devtools$toolbox40240(obj__$1,header__$1,style__$1,tag__$1,meta40241));
 });
 
 }
 
-return (new devtools.toolbox.t_devtools$toolbox24723(obj,header,style,tag,cljs.core.PersistentArrayMap.EMPTY));
-});
+return (new devtools.toolbox.t_devtools$toolbox40240(obj,header,style,tag,cljs.core.PersistentArrayMap.EMPTY));
+}));
 
-devtools.toolbox.envelope.cljs$lang$maxFixedArity = 4;
+(devtools.toolbox.envelope.cljs$lang$maxFixedArity = 4);
 
 /**
  * Forces object to be rendered by cljs-devtools during console logging.

@@ -1,4 +1,4 @@
-// Compiled by ClojureScript 1.10.520 {}
+// Compiled by ClojureScript 1.11.132 {:optimizations :none}
 goog.provide('parinfer_codemirror.example');
 goog.require('cljs.core');
 goog.require('clojure.string');
@@ -23,8 +23,8 @@ parinfer_codemirror.example.editor_opts = new cljs.core.PersistentArrayMap(null,
  * Create a non-parinfer editor.
  */
 parinfer_codemirror.example.create_regular_editor_BANG_ = (function parinfer_codemirror$example$create_regular_editor_BANG_(var_args){
-var G__21100 = arguments.length;
-switch (G__21100) {
+var G__32344 = arguments.length;
+switch (G__32344) {
 case 1:
 return parinfer_codemirror.example.create_regular_editor_BANG_.cljs$core$IFn$_invoke$arity$1((arguments[(0)]));
 
@@ -39,31 +39,31 @@ throw (new Error(["Invalid arity: ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(
 }
 });
 
-parinfer_codemirror.example.create_regular_editor_BANG_.cljs$core$IFn$_invoke$arity$1 = (function (element_id){
+(parinfer_codemirror.example.create_regular_editor_BANG_.cljs$core$IFn$_invoke$arity$1 = (function (element_id){
 return parinfer_codemirror.example.create_regular_editor_BANG_.call(null,element_id,cljs.core.PersistentArrayMap.EMPTY);
-});
+}));
 
-parinfer_codemirror.example.create_regular_editor_BANG_.cljs$core$IFn$_invoke$arity$2 = (function (element_id,opts){
+(parinfer_codemirror.example.create_regular_editor_BANG_.cljs$core$IFn$_invoke$arity$2 = (function (element_id,opts){
 var element = document.getElementById(element_id);
 if(cljs.core._EQ_.call(null,"none",element.style.display)){
 return null;
 } else {
 var cm = CodeMirror.fromTextArea(element,cljs.core.clj__GT_js.call(null,cljs.core.merge.call(null,parinfer_codemirror.example.editor_opts,new cljs.core.PersistentArrayMap(null, 1, [new cljs.core.Keyword(null,"mode","mode",654403691),"clojure"], null),opts)));
 var wrapper = cm.getWrapperElement();
-wrapper.id = ["cm-",cljs.core.str.cljs$core$IFn$_invoke$arity$1(element_id)].join('');
+(wrapper.id = ["cm-",cljs.core.str.cljs$core$IFn$_invoke$arity$1(element_id)].join(''));
 
 return cm;
 }
-});
+}));
 
-parinfer_codemirror.example.create_regular_editor_BANG_.cljs$lang$maxFixedArity = 2;
+(parinfer_codemirror.example.create_regular_editor_BANG_.cljs$lang$maxFixedArity = 2);
 
 /**
  * Create a parinfer editor.
  */
 parinfer_codemirror.example.create_editor_BANG_ = (function parinfer_codemirror$example$create_editor_BANG_(var_args){
-var G__21103 = arguments.length;
-switch (G__21103) {
+var G__32347 = arguments.length;
+switch (G__32347) {
 case 2:
 return parinfer_codemirror.example.create_editor_BANG_.cljs$core$IFn$_invoke$arity$2((arguments[(0)]),(arguments[(1)]));
 
@@ -78,26 +78,26 @@ throw (new Error(["Invalid arity: ",cljs.core.str.cljs$core$IFn$_invoke$arity$1(
 }
 });
 
-parinfer_codemirror.example.create_editor_BANG_.cljs$core$IFn$_invoke$arity$2 = (function (element_id,key_){
+(parinfer_codemirror.example.create_editor_BANG_.cljs$core$IFn$_invoke$arity$2 = (function (element_id,key_){
 return parinfer_codemirror.example.create_editor_BANG_.call(null,element_id,key_,cljs.core.PersistentArrayMap.EMPTY);
-});
+}));
 
-parinfer_codemirror.example.create_editor_BANG_.cljs$core$IFn$_invoke$arity$3 = (function (element_id,key_,opts){
+(parinfer_codemirror.example.create_editor_BANG_.cljs$core$IFn$_invoke$arity$3 = (function (element_id,key_,opts){
 if(cljs.core.truth_(cljs.core.get.call(null,cljs.core.deref.call(null,parinfer_codemirror.state.state),key_))){
 return null;
 } else {
 var element = document.getElementById(element_id);
 var cm = CodeMirror.fromTextArea(element,cljs.core.clj__GT_js.call(null,cljs.core.merge.call(null,parinfer_codemirror.example.editor_opts,opts)));
 var wrapper = cm.getWrapperElement();
-wrapper.id = ["cm-",cljs.core.str.cljs$core$IFn$_invoke$arity$1(element_id)].join('');
+(wrapper.id = ["cm-",cljs.core.str.cljs$core$IFn$_invoke$arity$1(element_id)].join(''));
 
 parinfer_codemirror.editor.parinferize_BANG_.call(null,cm,key_,new cljs.core.Keyword(null,"parinfer-mode","parinfer-mode",-851652980).cljs$core$IFn$_invoke$arity$1(opts),"");
 
 return cm;
 }
-});
+}));
 
-parinfer_codemirror.example.create_editor_BANG_.cljs$lang$maxFixedArity = 3;
+(parinfer_codemirror.example.create_editor_BANG_.cljs$lang$maxFixedArity = 3);
 
 parinfer_codemirror.example.render_dev_BANG_ = (function parinfer_codemirror$example$render_dev_BANG_(){
 parinfer_codemirror.example.create_editor_BANG_.call(null,"code-indent-mode",new cljs.core.Keyword(null,"indent-mode","indent-mode",1737814542));

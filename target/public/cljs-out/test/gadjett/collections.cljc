@@ -246,8 +246,6 @@
   [m]
   (into {} (remove (comp nil? second) m)))
 
-
-;; http://stackoverflow.com/a/34221816/813665
 (defn compactize-map-recursive
   "Remove from a map the entries whose values are `nil`.
   If all the values of a nested map are `nil` the entrie is removed.
@@ -256,13 +254,13 @@
 (compactize-map-recursive {:x 1 :z {:a nil} :a {:b nil :c 2 :d {:e nil :f 2}}})
 ~~~
   "
-    [m]
-  (let [f (fn [x]
-            (if (map? x)
-              (let [kvs (filter (comp not nil? second) x)]
-                (if (empty? kvs) nil (into {} kvs)))
-              x))]
-    (postwalk f m)))
+  [m]
+  (postwalk
+   (fn [el]
+     (if (map? el)
+       (not-empty (into {} (remove (comp nil? second)) el))
+       el))
+   m))
 
 (defn filter-map
   "Run a function on the values of a map and keep only the (key, value) pairs for which the function returns true
@@ -522,12 +520,12 @@ Thanks to [Jay Fields](http://blog.jayfields.com/2010/09/clojure-flatten-keys.ht
       (last maps))))
 
 (defn deep-merge
-" Deep merges maps.
+  " Deep merges maps.
 
-~~~klipse
-(deep-merge {} {:a {:b 1}, :c {:e 4, :d 2, :f {:g 8}}} {:a {:b 1}, :c {:e 4, :d 2000, :f {:g 9000}}})
-~~~
-"
+  ~~~klipse
+  (deep-merge {} {:a {:b 1}, :c {:e 4, :d 2, :f {:g 8}}} {:a {:b 1}, :c {:e 4, :d 2000, :f {:g 9000}}})
+  ~~~
+  "
   [& maps]
   (let [maps (filter identity maps)]
     (assert (every? map? maps))
@@ -814,3 +812,90 @@ Default settings:
   [map ks]
   (reduce #(conj %1 (map %2)) [] ks))
 
+
+(defn apply-with-map
+  "Call a function - that expects spliced key values - with a map (ignoring key/values where value is nil).
+   Useful when you need to remove some keys according to some conditions."
+  [f args]
+  (apply f (->> args
+                compactize-map
+                (into [])
+                (mapcat identity))))
+
+(defn order-by
+  "
+  Receives [keyfn1 direction1 keyfn2 direction1 ...] coll
+  Returns a sorted sequence of the items in coll, where the sort
+  order is determined by comparing (keyfn1 item) with direction
+  direction1, then by comparing (keyfn2 item) with direction
+  direction2 ...
+
+  ~~~klipse
+  (order-by [first :desc second :asc] [[9 7] [9 4] [2 5] [9 2]])
+  ~~~
+  "
+  [keyfn-direction-pairs coll]
+  {:pre [((comp even? count) keyfn-direction-pairs)
+         (->> keyfn-direction-pairs
+              rest
+              (take-nth 2)
+              (every? #{:asc :desc}))]}
+  (let [keyfns (take-nth 2 keyfn-direction-pairs)
+        directions (take-nth 2 (rest keyfn-direction-pairs))]
+    (sort-by
+     (apply juxt keyfns)
+     (fn [x y]
+       (->> (interleave directions x y)
+            (partition 3)
+            (reduce (fn [[x' y'] [order xi yi]]
+                      (case order
+                        :asc [(conj x' xi) (conj y' yi)]
+                        :desc [(conj x' yi) (conj y' xi)])) [[] []])
+            (apply compare)))
+     coll)))
+
+(defn headers-and-rows->maps
+  "Receives a tabular collection where the first elememt contains the headers
+  and the rest of the elements are the rows.
+  Returns a collection where each row is converted into a map whose keys are the headers.
+  In rows whose number of elements is lower than the number of headers, the missing headers won't appear in the corresponding map.
+  In rows whose number of elements is higher than the number of headers, the additional elements won't appear in the corresponding map.
+
+  See also: headers-and-maps->rows.
+
+  ~~~klipse
+  (headers-and-rows->maps  [\"name\" \"title\" \"total\"]
+                           [[\"David\" \"Architect\" 19]
+                            [\"Anna\" \"Dev\"]
+                            [\"Joe\" \"Analyst\" 88 321]])
+  ~~~
+  "
+  [headers rows]
+  (map (partial zipmap headers) rows))
+
+(defn headers-and-maps->rows
+  "Receives a sequence of headers and a sequence of maps whose keys are presumably from the headers.
+  Returns a sequence of rows where elements are ordered as in the headers sequence.
+
+  See also: headers-and-rows->maps.
+  ~~~klipse
+    (headers-and-rows->maps [\"name\" \"title\" \"total\"]
+                          [[\"Joe\" \"Dev\" 88]
+                           [\"Kelly\" \"Architect\"]
+                           [\"Anna\" \"Analyst\" 1234 9999]])
+  ~~~
+  "
+  [headers maps]
+  (map #(select-vals-in-order % headers) maps))
+
+(defn transform-keys
+  "Recursively transforms all map keys with some transform function.
+  ~~~klipse
+  (transform-keys name {:data {:qty 20}})
+  ~~~
+"
+  {:added "1.1"}
+  [transform m]
+  (let [f (fn [[k v]] [(transform k) v])]
+    ;; only apply to maps
+    (postwalk (fn [x] (if (map? x) (into {} (map f x)) x)) m)))

@@ -1,4 +1,4 @@
-// Compiled by ClojureScript 1.10.520 {}
+// Compiled by ClojureScript 1.11.132 {:optimizations :none}
 goog.provide('cljs.source_map.base64_vlq');
 goog.require('cljs.core');
 goog.require('clojure.string');
@@ -27,20 +27,20 @@ return shifted;
 cljs.source_map.base64_vlq.encode_val = (function cljs$source_map$base64_vlq$encode_val(n){
 var sb = (new goog.string.StringBuffer());
 var vlq = cljs.source_map.base64_vlq.to_vlq_signed.call(null,n);
-var digit_9997 = (vlq & cljs.source_map.base64_vlq.vlq_base_mask);
-var vlq_9998__$1 = (vlq >>> (5));
+var digit_14545 = (vlq & cljs.source_map.base64_vlq.vlq_base_mask);
+var vlq_14546__$1 = (vlq >>> (5));
 while(true){
-if((vlq_9998__$1 > (0))){
-var digit_9999__$1 = (digit_9997 | cljs.source_map.base64_vlq.vlq_continuation_bit);
-sb.append(cljs.source_map.base64.encode.call(null,digit_9999__$1));
+if((vlq_14546__$1 > (0))){
+var digit_14547__$1 = (digit_14545 | cljs.source_map.base64_vlq.vlq_continuation_bit);
+sb.append(cljs.source_map.base64.encode.call(null,digit_14547__$1));
 
-var G__10000 = (vlq_9998__$1 & cljs.source_map.base64_vlq.vlq_base_mask);
-var G__10001 = (vlq_9998__$1 >>> (5));
-digit_9997 = G__10000;
-vlq_9998__$1 = G__10001;
+var G__14548 = (vlq_14546__$1 & cljs.source_map.base64_vlq.vlq_base_mask);
+var G__14549 = (vlq_14546__$1 >>> (5));
+digit_14545 = G__14548;
+vlq_14546__$1 = G__14549;
 continue;
 } else {
-sb.append(cljs.source_map.base64.encode.call(null,digit_9997));
+sb.append(cljs.source_map.base64.encode.call(null,digit_14545));
 }
 break;
 }
@@ -68,12 +68,12 @@ var digit__$1 = (digit & cljs.source_map.base64_vlq.vlq_base_mask);
 var result__$1 = (result + (digit__$1 << shift));
 var shift__$1 = (shift + (5));
 if(continuation_QMARK_){
-var G__10002 = i__$1;
-var G__10003 = result__$1;
-var G__10004 = shift__$1;
-i = G__10002;
-result = G__10003;
-shift = G__10004;
+var G__14550 = i__$1;
+var G__14551 = result__$1;
+var G__14552 = shift__$1;
+i = G__14550;
+result = G__14551;
+shift = G__14552;
 continue;
 } else {
 return (new cljs.core.LazySeq(null,((function (i,result,shift,i__$1,continuation_QMARK_,digit__$1,result__$1,shift__$1,digit,l){

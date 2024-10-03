@@ -1,4 +1,4 @@
-// Compiled by ClojureScript 1.10.520 {}
+// Compiled by ClojureScript 1.11.132 {:optimizations :none}
 goog.provide('clojure.datafy');
 goog.require('cljs.core');
 goog.require('clojure.core.protocols');
@@ -34,39 +34,53 @@ return clojure.core.protocols.nav.call(null,coll,k,v);
 clojure.datafy.datify_ref = (function clojure$datafy$datify_ref(r){
 return cljs.core.with_meta.call(null,new cljs.core.PersistentVector(null, 1, 5, cljs.core.PersistentVector.EMPTY_NODE, [cljs.core.deref.call(null,r)], null),cljs.core.meta.call(null,r));
 });
-cljs.core.Var.prototype.clojure$core$protocols$Datafiable$ = cljs.core.PROTOCOL_SENTINEL;
+(Error.prototype.clojure$core$protocols$Datafiable$ = cljs.core.PROTOCOL_SENTINEL);
 
-cljs.core.Var.prototype.clojure$core$protocols$Datafiable$datafy$arity$1 = (function (r){
+(Error.prototype.clojure$core$protocols$Datafiable$datafy$arity$1 = (function (x){
+var x__$1 = this;
+return cljs.core.Throwable__GT_map.call(null,x__$1);
+}));
+
+(cljs.core.ExceptionInfo.prototype.clojure$core$protocols$Datafiable$ = cljs.core.PROTOCOL_SENTINEL);
+
+(cljs.core.ExceptionInfo.prototype.clojure$core$protocols$Datafiable$datafy$arity$1 = (function (x){
+var x__$1 = this;
+return cljs.core.Throwable__GT_map.call(null,x__$1);
+}));
+
+(cljs.core.Var.prototype.clojure$core$protocols$Datafiable$ = cljs.core.PROTOCOL_SENTINEL);
+
+(cljs.core.Var.prototype.clojure$core$protocols$Datafiable$datafy$arity$1 = (function (r){
 var r__$1 = this;
 return clojure.datafy.datify_ref.call(null,r__$1);
-});
+}));
 
-cljs.core.Reduced.prototype.clojure$core$protocols$Datafiable$ = cljs.core.PROTOCOL_SENTINEL;
+(cljs.core.Reduced.prototype.clojure$core$protocols$Datafiable$ = cljs.core.PROTOCOL_SENTINEL);
 
-cljs.core.Reduced.prototype.clojure$core$protocols$Datafiable$datafy$arity$1 = (function (r){
+(cljs.core.Reduced.prototype.clojure$core$protocols$Datafiable$datafy$arity$1 = (function (r){
 var r__$1 = this;
 return clojure.datafy.datify_ref.call(null,r__$1);
-});
+}));
 
-cljs.core.Atom.prototype.clojure$core$protocols$Datafiable$ = cljs.core.PROTOCOL_SENTINEL;
+(cljs.core.Atom.prototype.clojure$core$protocols$Datafiable$ = cljs.core.PROTOCOL_SENTINEL);
 
-cljs.core.Atom.prototype.clojure$core$protocols$Datafiable$datafy$arity$1 = (function (r){
+(cljs.core.Atom.prototype.clojure$core$protocols$Datafiable$datafy$arity$1 = (function (r){
 var r__$1 = this;
 return clojure.datafy.datify_ref.call(null,r__$1);
-});
+}));
 
-cljs.core.Volatile.prototype.clojure$core$protocols$Datafiable$ = cljs.core.PROTOCOL_SENTINEL;
+(cljs.core.Volatile.prototype.clojure$core$protocols$Datafiable$ = cljs.core.PROTOCOL_SENTINEL);
 
-cljs.core.Volatile.prototype.clojure$core$protocols$Datafiable$datafy$arity$1 = (function (r){
+(cljs.core.Volatile.prototype.clojure$core$protocols$Datafiable$datafy$arity$1 = (function (r){
 var r__$1 = this;
 return clojure.datafy.datify_ref.call(null,r__$1);
-});
+}));
 
-cljs.core.Delay.prototype.clojure$core$protocols$Datafiable$ = cljs.core.PROTOCOL_SENTINEL;
+(cljs.core.Delay.prototype.clojure$core$protocols$Datafiable$ = cljs.core.PROTOCOL_SENTINEL);
 
-cljs.core.Delay.prototype.clojure$core$protocols$Datafiable$datafy$arity$1 = (function (r){
+(cljs.core.Delay.prototype.clojure$core$protocols$Datafiable$datafy$arity$1 = (function (r){
 var r__$1 = this;
 return clojure.datafy.datify_ref.call(null,r__$1);
-});
+}));
 
 //# sourceMappingURL=datafy.js.map

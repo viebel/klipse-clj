@@ -1,7 +1,7 @@
 (ns devtools.async
   (:require-macros [devtools.oops :refer [oset ocall]])
-  (:require [goog.async.nextTick :as next-tick]
-            [goog.labs.userAgent.browser :as ua]
+  (:require [goog.async.nextTick]
+            [goog.labs.userAgent.browser :refer [isChrome isVersionOrHigher]]
             [devtools.context :as context]))
 
 (defn ^:dynamic available? []
@@ -10,7 +10,7 @@
 (def ^:dynamic fixed-chrome-version-for-async "65.0.3321")
 
 (defn ^:dynamic needed? []
-  (not (and (ua/isChrome) (ua/isVersionOrHigher fixed-chrome-version-for-async))))
+  (not (and (isChrome) (isVersionOrHigher fixed-chrome-version-for-async))))
 
 (defn ^:dynamic get-not-needed-message []
   (str "cljs-devtools: the :async feature is no longer needed since Chrome " fixed-chrome-version-for-async ", "
@@ -30,11 +30,11 @@
   nil)
 
 (defn install-async-set-immediate! []
-  (set! *original-set-immediate* next-tick/setImmediate_)
-  (set! next-tick/setImmediate_ promise-based-set-immediate))
+  (set! *original-set-immediate* js/goog.async.nextTick.setImmediate_)
+  (set! js/goog.async.nextTick.setImmediate_ promise-based-set-immediate))
 
 (defn uninstall-async-set-immediate! []
-  (set! next-tick/setImmediate_ *original-set-immediate*))
+  (set! js/goog.async.nextTick.setImmediate_ *original-set-immediate*))
 
 ; -- installation -----------------------------------------------------------------------------------------------------------
 

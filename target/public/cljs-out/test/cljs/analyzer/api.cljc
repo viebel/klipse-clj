@@ -11,20 +11,46 @@
   to the analyzer."
   (:refer-clojure :exclude [all-ns ns-interns ns-resolve resolve find-ns
                             ns-publics remove-ns])
-  (:require [cljs.env :as env]
-            [cljs.analyzer :as ana]))
+  #?(:clj  (:require [cljs.analyzer :as ana]
+                     [cljs.env :as env]
+                     [cljs.util :as util]
+                     [clojure.edn :as edn]
+                     [clojure.java.io :as io])
+     :cljs (:require [cljs.analyzer :as ana]
+                     [cljs.env :as env])))
 
 ;; =============================================================================
 ;; Useful Utilities
 
 (defn empty-state
-  "Creates an empty compilation state Atom<Map>."
+  "Creates an empty compilation state Atom<Map>. The optional opts arg is a map
+   representing the compiler configuration. See the documentation
+   for details: https://clojurescript.org/reference/compiler-options"
+  ([]
+   (if-not (nil? env/*compiler*)
+     env/*compiler*
+     (env/default-compiler-env)))
+  ([opts]
+   (env/default-compiler-env opts)))
+
+(defn current-state
+  "Return the current compiler state atom."
   []
-  (env/default-compiler-env))
+  env/*compiler*)
+
+(defn current-file
+  "Return the current file under analysis or compilation."
+  []
+  ana/*cljs-file*)
+
+(defn current-ns
+  "Return the current ns under analysis or compilation."
+  []
+  ana/*cljs-ns*)
 
 (defmacro with-state
   "Run the body with the given compilation state Atom<Map>."
-  [state body]
+  [state & body]
   `(env/with-compiler-env ~state
      ~@body))
 
@@ -52,18 +78,49 @@
   [warning-type env extra]
   (ana/default-warning-handler warning-type env extra))
 
+(defmacro with-warning-handlers
+  "Helper macro for custom handling of emitted warnings. Handlers should be
+   a vector of functions. The signature of these functions is
+   [warn-type env warn-info]. warn-type is a keyword describing the warning,
+   env is the analysis environment, and warn-info is a map of extra useful
+   information for a particular warning type."
+  [handlers & body]
+  `(ana/with-warning-handlers ~handlers
+     ~@body))
+
+(defn warning-message
+  "Helper for generating the standard analyzer messages for warnings. Should be
+  passed warn-type and warn-info. See with-warning-handlers."
+  [warn-type warn-info]
+  (ana/error-message warn-type warn-info))
+
+(defn enabled-warnings
+  "Get the enabled warning types."
+  []
+  ana/*cljs-warnings*)
+
 (defn get-options
   "Return the compiler options from compiler state."
-  ([] (get-options env/*compiler*))
+  ([] (get-options (current-state)))
   ([state]
    (get @state :options)))
 
 (defn get-js-index
   "Return the currently computed Google Closure js dependency index from the
   compiler state."
-  ([] (get-options env/*compiler*))
+  ([] (get-js-index (current-state)))
   ([state]
    (get @state :js-dependency-index)))
+
+(def
+  ^{:doc "ClojureScript's default analysis passes."}
+  default-passes ana/default-passes)
+
+(defmacro with-passes
+  "Evaluate the body with the provided sequence of compiler passes."
+  [passes & body]
+  `(binding [ana/*passes* ~passes]
+     ~@body))
 
 #?(:clj
    (defn analyze
@@ -77,11 +134,7 @@
      ([env form] (analyze env form nil))
      ([env form name] (analyze env form name nil))
      ([env form name opts]
-      (analyze
-        (if-not (nil? env/*compiler*)
-          env/*compiler*
-          (env/default-compiler-env opts))
-        env form name opts))
+      (analyze (or (current-state) (empty-state opts)) env form name opts))
      ([state env form name opts]
       (env/with-compiler-env state
         (binding [ana/*cljs-warning-handlers* (:warning-handlers opts ana/*cljs-warning-handlers*)]
@@ -99,7 +152,7 @@
      "Helper for parsing only the essential namespace information from a
       ClojureScript source file and returning a cljs.closure/IJavaScript compatible
       map _not_ a namespace AST node.
-   
+
       By default does not load macros or perform any analysis of dependencies. If
       opts parameter provided :analyze-deps and :load-macros keys their values will
       be used for *analyze-deps* and *load-macros* bindings respectively. This
@@ -108,20 +161,17 @@
      ([src] (parse-ns src nil nil))
      ([src opts] (parse-ns src nil opts))
      ([src dest opts]
-      (parse-ns
-        (if-not (nil? env/*compiler*)
-          env/*compiler*
-          (env/default-compiler-env opts))
-        src dest opts))
+      (parse-ns (or (current-state) (empty-state opts)) src dest opts))
      ([state src dest opts]
       (env/with-compiler-env state
         (binding [ana/*cljs-warning-handlers* (:warning-handlers opts ana/*cljs-warning-handlers*)]
           (ana/parse-ns src dest opts))))))
+
 #?(:clj
    (defn analyze-file
      "Given a java.io.File, java.net.URL or a string identifying a resource on the
       classpath attempt to analyze it.
-   
+
       This function side-effects the ambient compilation environment
       `cljs.env/*compiler*` to aggregate analysis information. opts argument is
       compiler options, if :cache-analysis true will cache analysis to
@@ -129,15 +179,21 @@
       meaningful value."
      ([f] (analyze-file f nil))
      ([f opts]
-      (analyze-file
-        (if-not (nil? env/*compiler*)
-          env/*compiler*
-          (env/default-compiler-env opts))
-        f opts))
+      (analyze-file (or (current-state) (empty-state opts)) f opts))
      ([state f opts]
       (env/with-compiler-env state
         (binding [ana/*cljs-warning-handlers* (:warning-handlers opts ana/*cljs-warning-handlers*)]
           (ana/analyze-file f opts))))))
+
+#?(:clj
+   (defn read-analysis-cache
+     "Read an analysis cache."
+     [cache-file]
+     (case (util/ext cache-file)
+       "edn" (edn/read-string (slurp cache-file))
+       "json" (let [{:keys [reader read]} @ana/transit]
+                (with-open [is (io/input-stream cache-file)]
+                  (read (reader is :json ana/transit-read-opts)))))))
 
 ;; =============================================================================
 ;; Main API

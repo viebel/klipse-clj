@@ -1,5 +1,5 @@
 (ns no.en.core
-  (:refer-clojure :exclude [replace read-string])
+  (:refer-clojure :exclude [replace read-string parse-long parse-double])
   (:require [clojure.string :refer [blank? join replace split upper-case]]
             #?(:clj [clojure.edn :refer [read-string]])
             #?(:cljs [cljs.reader :refer [read-string]])
@@ -16,7 +16,7 @@
    :rabbitmq 5672
    :zookeeper 2181})
 
-(def url-regex #"([^:]+)://(([^:]+):([^@]+)@)?(([^:/]+)(:([0-9]+))?((/[^?#]*)(\?([^#]*))?)?)(\#(.*))?")
+(def url-regex #"([^:]+)://(([^:]+):([^@/]+)@)?(([^:/]+)(:([0-9]+))?((/[^?#]*)(\?([^#]*))?)?)(\#(.*))?")
 
 (defn split-by-regex
   "Split the string `s` by the regex `pattern`."
@@ -80,6 +80,12 @@
     #?(:clj (URLDecoder/decode s (or encoding "UTF-8"))
        :cljs (js/decodeURIComponent s))))
 
+(defn try-url-decode
+  "Try to URL decode the string `s`."
+  [s & [encoding]]
+  (try (url-decode s encoding)
+       (catch #?(:clj Exception :cljs js/Error) _ s)))
+
 (defn pow [n x]
   #?(:clj (Math/pow n x)
      :cljs (.pow js/Math n x)))
@@ -98,9 +104,9 @@
 (defn- apply-unit [number unit]
   (if (string? unit)
     (case (upper-case unit)
-      (case unit
-        "M" (* number 1000000)
-        "B" (* number 1000000000)))
+      "M" (* number 1000000)
+      "B" (* number 1000000000)
+      number)
     number))
 
 (defn- parse-number [s parse-fn]
@@ -202,16 +208,16 @@
   "Parse the query parameter string `s` and return a map."
   [s]
   (if s
-    (->> (split (str s) #"&")
+    (->> (split (str (try-url-decode s)) #"&")
          (map #(split %1 #"="))
          (filter #(= 2 (count %1)))
-         (mapcat #(vector (keyword (url-decode (first %1))) (url-decode (second %1))))
+         (mapcat #(vector (keyword (first %1)) (second %1)))
          (apply hash-map))))
 
 (defn parse-url
   "Parse the url `s` and return a Ring compatible map."
   [s]
-  (if-let [matches (re-matches url-regex (str s))]
+  (if-let [matches (re-matches url-regex (try-url-decode (str s)))]
     (let [scheme (keyword (nth matches 1))]
       (compact-map
        {:scheme scheme
@@ -224,8 +230,9 @@
         :query-string (nth matches 12)
         :fragment (nth matches 14)}))))
 
-(defmacro prog1 [& body]
+(defmacro prog1
   "Evaluate `body`, returning the result of the first form."
+  [& body]
   `(let [result# ~(first body)]
      ~@(rest body)
      result#))

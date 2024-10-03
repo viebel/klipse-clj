@@ -4,7 +4,7 @@
 (ns applied-science.js-interop
   "A JavaScript-interop library for ClojureScript."
   (:refer-clojure :exclude [get get-in assoc! assoc-in! update! update-in! select-keys contains? unchecked-get unchecked-set apply])
-  (:require [goog.reflect]
+  (:require [goog.reflect :as reflect]
             [cljs.core :as core]
             [applied-science.js-interop.impl :as impl])
   (:require-macros [applied-science.js-interop :as j]))
@@ -34,6 +34,7 @@
   (j/get o :k)
   (j/get o .-k)
   ```"
+  ([k] (fn [obj] (j/get obj k)))
   ([obj k]
    (j/get obj k))
   ([obj k not-found]
@@ -48,6 +49,9 @@
    (j/get-in o [:x :y] :fallback-value)
    (j/get-in o [.-x .-y] :fallback-value)
    ```"
+  ([ks]
+   (let [ks (mapv impl/wrap-key ks)]
+     (fn [obj] (impl/get-in* obj ks))))
   ([obj ks]
    (impl/get-in* obj (mapv impl/wrap-key ks)))
   ([obj ks not-found]
@@ -90,7 +94,8 @@
    ...)
   ```"
   [obj]
-  (JSLookup. obj))
+  (when obj
+    (JSLookup. obj)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -154,6 +159,52 @@
   [obj ks f & args]
   (impl/update-in* obj (mapv impl/wrap-key ks) f args))
 
+(defn merge!
+  "Extends `obj` with the properties of one or more objects, overwriting
+   existing properties, moving left to right. Returns `obj`.
+   An empty starting object is provided if `obj` is nil.
+  ```
+  (j/extend! o other)
+  (j/extend! o other #js{:x 1})
+  ```
+  Not IE6-friendly"
+  ([obj] obj)
+  ([obj x]
+   (let [obj (j/some-or obj #js{})]
+     (when (some? x)
+       (doseq [k (js-keys x)]
+         (unchecked-set obj k (unchecked-get x k))))
+     obj))
+  ([obj x & more]
+   (reduce merge! (merge! obj x) more)))
+
+(defn extend!
+  "alias for merge!"
+  ([obj] obj)
+  ([obj x] (merge! obj x))
+  ([obj x & more]
+   (reduce merge! (merge! obj x) more)))
+
+(defn update-keys! [obj f]
+  "Updates the keys of `obj` by applying `f` to each key. Returns `obj`.
+  ```
+  (j/update-keys! o (partial str \"prefix-\"))
+  ```"
+  (when obj
+    (doseq [k (js/Object.keys obj)
+            :let [v (core/unchecked-get obj k)]]
+      (js-delete obj k)
+      (core/unchecked-set obj (f k) v))
+    obj))
+
+(defn update-vals! [obj f]
+  "Updates the values of `obj` by applying `f` to each value, iterating using js/Object.entries. Returns `obj`."
+  (when obj
+    (doseq [entry (js/Object.entries obj)]
+      (j/let [^js [k v] entry]
+        (core/unchecked-set obj k (f v))))
+    obj))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; Array operations
@@ -164,9 +215,11 @@
   ```
   (j/push! arr 10)
   ```"
-  [^js array x]
-  (doto array
-    (.push x)))
+  ([] #js[])
+  ([array] array)
+  ([^js array x]
+   (doto array
+     (.push x))))
 
 (defn unshift!
   "Prepends `v` to `a` and returns the mutated array.
@@ -201,6 +254,24 @@
   ```"
   [obj k arg-array]
   (.apply (j/get obj k) obj arg-array))
+
+(defn call-in
+  "Call function nested at `path` with `args`, binding `this` to its parent object.
+
+  ```
+  (j/call-in o [:x :someFunction] arg1 arg2)
+  ```"
+  [obj ks & args]
+  (impl/apply-in* obj (mapv impl/wrap-key ks) (to-array args)))
+
+(defn apply-in
+  "Apply function nested at `path` with `arg-array`, binding `this` to its parent object.
+
+  ```
+  (j/apply-in o [:x :someFunction] arg1 arg2)
+  ```"
+  [obj ks arg-array]
+  (impl/apply-in* obj (mapv impl/wrap-key ks) arg-array))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

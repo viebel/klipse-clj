@@ -1,4 +1,4 @@
-// Compiled by ClojureScript 1.10.520 {}
+// Compiled by ClojureScript 1.11.132 {:optimizations :none}
 goog.provide('clojure.walk');
 goog.require('cljs.core');
 /**
@@ -51,49 +51,45 @@ return clojure.walk.walk.call(null,cljs.core.partial.call(null,clojure.walk.prew
  * Recursively transforms all map keys from strings to keywords.
  */
 clojure.walk.keywordize_keys = (function clojure$walk$keywordize_keys(m){
-var f = (function (p__12367){
-var vec__12368 = p__12367;
-var k = cljs.core.nth.call(null,vec__12368,(0),null);
-var v = cljs.core.nth.call(null,vec__12368,(1),null);
+var f = (function (p__9958){
+var vec__9959 = p__9958;
+var k = cljs.core.nth.call(null,vec__9959,(0),null);
+var v = cljs.core.nth.call(null,vec__9959,(1),null);
 if(typeof k === 'string'){
 return new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [cljs.core.keyword.call(null,k),v], null);
 } else {
 return new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [k,v], null);
 }
 });
-return clojure.walk.postwalk.call(null,((function (f){
-return (function (x){
+return clojure.walk.postwalk.call(null,(function (x){
 if(cljs.core.map_QMARK_.call(null,x)){
 return cljs.core.into.call(null,cljs.core.PersistentArrayMap.EMPTY,cljs.core.map.call(null,f,x));
 } else {
 return x;
 }
-});})(f))
-,m);
+}),m);
 });
 /**
  * Recursively transforms all map keys from keywords to strings.
  */
 clojure.walk.stringify_keys = (function clojure$walk$stringify_keys(m){
-var f = (function (p__12371){
-var vec__12372 = p__12371;
-var k = cljs.core.nth.call(null,vec__12372,(0),null);
-var v = cljs.core.nth.call(null,vec__12372,(1),null);
+var f = (function (p__9962){
+var vec__9963 = p__9962;
+var k = cljs.core.nth.call(null,vec__9963,(0),null);
+var v = cljs.core.nth.call(null,vec__9963,(1),null);
 if((k instanceof cljs.core.Keyword)){
 return new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [cljs.core.name.call(null,k),v], null);
 } else {
 return new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [k,v], null);
 }
 });
-return clojure.walk.postwalk.call(null,((function (f){
-return (function (x){
+return clojure.walk.postwalk.call(null,(function (x){
 if(cljs.core.map_QMARK_.call(null,x)){
 return cljs.core.into.call(null,cljs.core.PersistentArrayMap.EMPTY,cljs.core.map.call(null,f,x));
 } else {
 return x;
 }
-});})(f))
-,m);
+}),m);
 });
 /**
  * Recursively transforms form by replacing keys in smap with their
